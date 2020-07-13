@@ -56,5 +56,19 @@ deploy:
 $ npm install hexo-deployer-git  --save
 ```
 ```bash
-$ hexo d
+$ hexo clean 
+$ hexo d -g
 ```
+
+## 异地管理
+创建hexo分支 并设置为默认分支
+```bash
+$ cd Hexo-Blog 
+$ git init
+$ git branch hexo
+$ git remote add origin https://github.com/lclee0577/lclee0577.github.io.git
+
+```
+在 github 网页端 `Settings` - `Branches` -`Default branch` 中将默认分支设置为`hexo` 并点击`update`确认。
+
+异地管理只需克隆hexo分支再编辑即可。
