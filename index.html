@@ -168,10 +168,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2020-07-30 18:48:05 / Modified: 20:56:43" itemprop="dateCreated datePublished" datetime="2020-07-30T18:48:05+08:00">2020-07-30</time>
+              <time title="Created: 2020-07-30 18:48:05" itemprop="dateCreated datePublished" datetime="2020-07-30T18:48:05+08:00">2020-07-30</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-07-31 21:37:14" itemprop="dateModified" datetime="2020-07-31T21:37:14+08:00">2020-07-31</time>
+              </span>
 
           
 
@@ -184,7 +190,8 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1 id="FFT入门"><a href="#FFT入门" class="headerlink" title="FFT入门"></a>FFT入门</h1><h2 id="预备知识"><a href="#预备知识" class="headerlink" title="预备知识"></a>预备知识</h2><ol>
+          <p>[TOC]</p>
+<h1 id="FFT入门"><a href="#FFT入门" class="headerlink" title="FFT入门"></a>FFT入门</h1><h2 id="预备知识"><a href="#预备知识" class="headerlink" title="预备知识"></a>预备知识</h2><ol>
 <li>信号 $s=A\cos(\omega t + \phi)$，其中$A$为信号的幅值，$\phi$为信号的相位。傅里叶变换就是要找到  $\omega$ ~$A$， 以及$\omega$ ~$\phi$  的关系。（一般我们处理数据大多使用$\omega$ ~$A$的关系）。<img src="/2020/07/30/FFT-guide/时域频域图.jpeg" alt="时域频域图"></li>
 <li><p>所有的信号都可以由若干个不同幅值、相位、频率的余弦信号叠加而成即$s=A_1\cos(\omega_1+\phi_1)+A_2\cos(\omega_2+\phi_2)+A_3\cos(\omega_3+\phi_3)+…$   如下图多个频率的余弦逼近门函数<br><img src="/2020/07/30/FFT-guide/正弦逼近方波.gif" alt="逼近方波"></p>
 </li>
@@ -199,8 +206,17 @@
 </li>
 <li><p>实际处理的数据不同于上面的连续信号，这里要引入一个采样率$Fs$即一秒钟对信号进行多少次采样。例如对于$\cos(\omega_1 t)$ 来说，以采样率$Fs=1000$得到的信号就是一个这样的序列：[$\cos(0.001\omega_1),\cos(0.002\omega_1),\cos(0.003\omega_1),…$]。</p>
 </li>
-<li>由于实际处理的信号都是一个个离散的数值，我们对这些信号的处理称之为离散傅里叶变换DTF，在利用傅里叶变换的对称性优化后得到快速傅里叶变换即我们常用的FFT。</li>
+<li>由于实际处理的信号都是一个个离散的数值，我们对这些信号的处理称之为离散傅里叶变换DTF，在利用傅里叶变换的对称性优化后得到快速傅里叶变换即我们常用的FFT。(记住我们处理的是离散的数值序列就行。)</li>
 </ol>
+<h2 id="代码实操"><a href="#代码实操" class="headerlink" title="代码实操"></a>代码实操</h2><p>这里用到的两个库: </p>
+<ul>
+<li><code>numpy</code> 包含常用的数学函数，我们要用的就是与fft相关的函数。</li>
+<li><code>matplotlib</code> 常用的画图库，语法与<code>MATLAB</code>类似。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"></span><br><span class="line">Fs = <span class="number">10</span> <span class="comment">#每秒采样率</span></span><br><span class="line"> </span><br><span class="line">t = np.linspace(<span class="number">0</span>,<span class="number">2</span>,<span class="number">10</span>*Fs) <span class="comment">#2秒钟，每秒10个点</span></span><br><span class="line">signal = np.cos(<span class="number">2</span>*np.pi*<span class="number">1</span>*t) </span><br><span class="line">plt.scatter(t,signal)<span class="comment">#plt.plot(t,signal) 画曲线用plot 画离散点用scatter</span></span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
+<p>当我们将t和signal的作为坐标值得出下图<br><img src="/2020/07/30/FFT-guide/余弦离散点.png" alt="余弦离散点"><br>为了便于观看通常我们使用<code>plt.plot()</code>将相邻的点连接起来便会看到较为光滑的曲线。<br><img src="/2020/07/30/FFT-guide/余弦连线图.png" alt="余弦连线图"><br>采样率$Fs$越大，采集的点就会越密集。这里补充一个知识点：叫做奈奎斯特采样定理。简单的说就是我们可以采集到的频率范围是$[-\frac{Fs}{2},\frac{Fs}{2}]$</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"></span><br><span class="line">Fs = <span class="number">1000</span> <span class="comment">#每秒采样率</span></span><br><span class="line"> </span><br><span class="line">t = np.linspace(<span class="number">0</span>,<span class="number">2</span>,<span class="number">10</span>*Fs) <span class="comment">#2秒钟，每秒1000个点</span></span><br><span class="line">signal =<span class="number">2</span> * np.cos(<span class="number">2</span>*np.pi*<span class="number">1</span>*t) + <span class="number">0.2</span>*np.sin(<span class="number">2</span>*np.pi*<span class="number">30</span>*t)</span><br><span class="line">plt.plot(t, signal)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
+<p>这段程序中线确定了变量$t = [0,0.001,0.002,…,1.999,2]$<br>这里我们生成一个幅值为 2  频率为 1Hz 的余弦与一个幅值为  0.2  频率为  30Hz  的正弦相加$Signal = 2\cos(2\pi t)+0.2\sin(2\pi\times30t)$根据t的不同取值得到得到一个与之对应的信号序列。使用<code>plt.plot(t, signal)</code>画图后可以得到下图。<br><img src="/2020/07/30/FFT-guide/低频余弦加高频正弦.png" alt="低频余弦加高频正弦"></p>
 
       
     </div>
