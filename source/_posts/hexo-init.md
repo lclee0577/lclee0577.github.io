@@ -72,3 +72,25 @@ $ git remote add origin https://github.com/lclee0577/lclee0577.github.io.git
 在 github 网页端 `Settings` - `Branches` -`Default branch` 中将默认分支设置为`hexo` 并点击`update`确认。
 
 异地管理只需克隆hexo分支再编辑即可。
+
+## 插入markdown目录
+ - npm install hexo-toc --save
+ - 配置文件_config.yml:
+ - ```json
+      toc:
+        maxdepth: 3
+        class: toc
+        slugify: transliteration
+        decodeEntities: false
+        anchor:
+          position: after
+          symbol: '#'
+          style: header-anchor
+      ```
+
+- 使用`<!-- toc -->` 将自动生成目录
+- 文章最上面与标题一起处添加 `toc: true `
+
+## 插入Latex
+
+  https://www.jianshu.com/p/7ab21c7f0674
