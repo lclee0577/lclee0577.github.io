@@ -102,3 +102,12 @@ deploy:
   repository: git@github.com:lclee0577/lclee0577.github.io.git
   branch: master
   
+toc:
+  maxdepth: 3
+  class: toc
+  slugify: transliteration
+  decodeEntities: false
+  anchor:
+    position: after
+    symbol: '#'
+    style: header-anchor
