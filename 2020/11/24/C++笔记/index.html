@@ -20,28 +20,32 @@
     var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta property="og:type" content="website">
-<meta property="og:title" content="Blog-lclee">
-<meta property="og:url" content="http://yoursite.com/index.html">
+  <meta name="description" content="资源 P3. 构造函数 P4.参数传递和返回值 常量成员函数 返回值传递 friend(友元) class body外的各种定义   P5.操作符重载和临时变量 operator overloading(操作符重载-1,成员函数) this operator overloading(操作符重载-2, 非成员函数) 无this 回顾   P7三大函数 拷贝构造 拷贝赋值 析构 Classes">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++笔记">
+<meta property="og:url" content="http://yoursite.com/2020/11/24/C++%E7%AC%94%E8%AE%B0/index.html">
 <meta property="og:site_name" content="Blog-lclee">
+<meta property="og:description" content="资源 P3. 构造函数 P4.参数传递和返回值 常量成员函数 返回值传递 friend(友元) class body外的各种定义   P5.操作符重载和临时变量 operator overloading(操作符重载-1,成员函数) this operator overloading(操作符重载-2, 非成员函数) 无this 回顾   P7三大函数 拷贝构造 拷贝赋值 析构 Classes">
 <meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-11-24T00:50:30.000Z">
+<meta property="article:modified_time" content="2020-11-30T01:12:53.002Z">
 <meta property="article:author" content="lclee">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="http://yoursite.com/">
+<link rel="canonical" href="http://yoursite.com/2020/11/24/C++%E7%AC%94%E8%AE%B0/">
 
 
 <script id="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome : true,
-    isPost : false,
+    isHome : false,
+    isPost : true,
     lang   : 'en'
   };
 </script>
 
-  <title>Blog-lclee</title>
+  <title>C++笔记 | Blog-lclee</title>
   
 
 
@@ -139,9 +143,10 @@
         <div class="content-wrap">
           
 
-          <div class="content index posts-expand">
+          <div class="content post posts-expand">
             
-      
+
+    
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
@@ -157,10 +162,9 @@
       <meta itemprop="name" content="Blog-lclee">
     </span>
       <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/11/24/C++%E7%AC%94%E8%AE%B0/" class="post-title-link" itemprop="url">C++笔记</a>
-        </h2>
+        <h1 class="post-title" itemprop="name headline">
+          C++笔记
+        </h1>
 
         <div class="post-meta">
             <span class="post-meta-item">
@@ -190,7 +194,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <div class="toc">
+        <div class="toc">
 
 <!-- toc -->
 <ul>
@@ -440,320 +444,30 @@
 </ul>
 <figure class="highlight cpp"><figcaption><span>&#123;.line-numbers&#125;</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> jj01</span><br><span class="line">&#123;</span><br><span class="line">  <span class="class"><span class="keyword">class</span> <span class="title">Base1</span> &#123;</span>  &#125;; </span><br><span class="line">  <span class="class"><span class="keyword">class</span> <span class="title">Derived1</span>:</span> <span class="keyword">public</span> Base1 &#123;  &#125;; 	</span><br><span class="line">  <span class="class"><span class="keyword">class</span> <span class="title">Base2</span> &#123;</span>  &#125;; </span><br><span class="line">  <span class="class"><span class="keyword">class</span> <span class="title">Derived2</span>:</span> <span class="keyword">public</span> Base2 &#123;  &#125;; </span><br><span class="line"></span><br><span class="line">  <span class="keyword">template</span> &lt;<span class="class"><span class="keyword">class</span> <span class="title">T1</span>, <span class="title">class</span> <span class="title">T2</span>&gt;</span></span><br><span class="line"><span class="class">  <span class="title">struct</span> <span class="title">pair</span> &#123;</span></span><br><span class="line">    <span class="keyword">typedef</span> T1 first_type; </span><br><span class="line">    <span class="keyword">typedef</span> T2 second_type; </span><br><span class="line"></span><br><span class="line">    T1 first; </span><br><span class="line">    T2 second; </span><br><span class="line">    pair() : first(T1()), second(T2()) &#123;&#125;</span><br><span class="line">    pair(<span class="keyword">const</span> T1&amp; a, <span class="keyword">const</span> T2&amp; b) : first(a), second(b) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">template</span> &lt;<span class="class"><span class="keyword">class</span> <span class="title">U1</span>, <span class="title">class</span> <span class="title">U2</span>&gt;</span></span><br><span class="line"><span class="class">    <span class="title">pair</span>(<span class="title">const</span> <span class="title">pair</span>&lt;U1, U2&gt;&amp; <span class="title">p</span>) :</span> first(p.first), second(p.second) &#123;&#125;</span><br><span class="line">  &#125;; </span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">test_member_template</span><span class="params">()</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; <span class="string">"test_member_template()"</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    pair&lt;Derived1, Derived2&gt; p; </span><br><span class="line">    pair&lt;Base1, Base2&gt; p2(pair&lt;Derived1, Derived2&gt;()); </span><br><span class="line">    pair&lt;Base1, Base2&gt; p3(p);   </span><br><span class="line">    <span class="comment">//Derived1 will be assigned to Base1; Derived2 will be assigned to Base2.</span></span><br><span class="line">    <span class="comment">//OO allow such assignments since of "is-a" relationship between them.  </span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//!	pair&lt;Derived1, Derived2&gt; p4(p3); </span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//error messages as below appear at the ctor statements of pair member template</span></span><br><span class="line">    <span class="comment">// [Error] no matching function for call to 'Derived1::Derived1(const Base1&amp;)'</span></span><br><span class="line">    <span class="comment">// [Error] no matching function for call to 'Derived2::Derived2(const Base2&amp;)'</span></span><br><span class="line"></span><br><span class="line">    Base1* ptr = <span class="keyword">new</span> Derived1; <span class="comment">//up-cast </span></span><br><span class="line">    <span class="function"><span class="built_in">shared_ptr</span>&lt;Base1&gt; <span class="title">sptr</span><span class="params">(<span class="keyword">new</span> Derived1)</span></span>; <span class="comment">//simulate up-cast</span></span><br><span class="line">    <span class="comment">//Note: make sure your environment support C++2.0 at first.</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-      
     </div>
 
     
     
     
+
       <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/30/FFT-guide/">
+        
 
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="lclee">
-      <meta itemprop="description" content="">
-    </span>
 
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog-lclee">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/07/30/FFT-guide/" class="post-title-link" itemprop="url">FFT-guide</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-07-30 18:48:05" itemprop="dateCreated datePublished" datetime="2020-07-30T18:48:05+08:00">2020-07-30</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-10-30 18:44:21" itemprop="dateModified" datetime="2020-10-30T18:44:21+08:00">2020-10-30</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <div class="toc">
-
-<!-- toc -->
-<ul>
-<li><a href="#fft-ru-men">FFT入门</a><ul>
-<li><a href="#yu-bei-zhi-shi">预备知识</a></li>
-<li><a href="#dai-ma-shi-cao">代码实操</a></li>
-<li><a href="#xin-dian-xin-hao-chu-li">心电信号处理</a><ul>
-<li><a href="#shu-ju-ku-jian-jie-wrist-ppg-during-exercise">数据库简介 Wrist PPG During Exercise</a></li>
-<li><a href="#ecg-xin-hao-chu-li">ECG信号处理</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<!-- tocstop -->
-<p></div></p>
-<h1><span id="fft-ru-men">FFT入门</span><a href="#fft-ru-men" class="header-anchor">#</a></h1><h2><span id="yu-bei-zhi-shi">预备知识</span><a href="#yu-bei-zhi-shi" class="header-anchor">#</a></h2><ol>
-<li>信号 $s=A\cos(\omega t + \phi)$，其中$A$为信号的幅值，$\phi$为信号的相位。傅里叶变换就是要找到  $\omega$ ~$A$， 以及$\omega$ ~$\phi$  的关系。（一般我们处理数据大多使用$\omega$ ~$A$的关系）。<img src="/2020/07/30/FFT-guide/时域频域图.jpeg" alt="时域频域图"></li>
-<li><p>所有的信号都可以由若干个不同幅值、相位、频率的余弦信号叠加而成即$s=A_1\cos(\omega_1+\phi_1)+A_2\cos(\omega_2+\phi_2)+A_3\cos(\omega_3+\phi_3)+…$   如下图多个频率的余弦逼近门函数<br><img src="/2020/07/30/FFT-guide/正弦逼近方波.gif" alt="逼近方波"></p>
-</li>
-<li><p>傅里叶变换公式：</p>
-<script type="math/tex; mode=display">\mathscr{F}(\omega)=\mathscr{F}[f(t)]=\int_{-\infty}^{+\infty}f(t)e^{-j\omega t} \mathcal{d}t</script><p>傅里叶逆变换</p>
-<script type="math/tex; mode=display">\mathscr{f}(\omega)=\mathscr{F}^{-1}[f(\omega)]=\frac{1}{2\pi}\int_{-\infty}^{+\infty}\mathscr{F}(\omega)e^{j\omega t} \mathcal{d}\omega</script><p>注：$\mathscr{F}[f(t)]$称之为对 $f(t)$的傅里叶变换</p>
-</li>
-<li><p>这里需要简单介绍一下单位冲击函数$\delta(t)$，在图形上用一个长度为1的箭头表示如下图所示<img src="/2020/07/30/FFT-guide/deltaFunc.png" alt="Alt"><br>单位冲击函数具有如下性质</p>
-<script type="math/tex; mode=display">\int_{-\infty}^{+\infty} \delta(t)dt=\int_{0^+}^{0^-}\delta(t)dt=1</script></li>
-<li><p>cos的傅里叶变换为两个幅值为$\pi$冲击函数 $\delta(\omega)$</p>
-<script type="math/tex; mode=display">\mathscr{F}[\cos(\omega_1t)]=\pi[\delta(\omega-\omega_1)+\delta(\omega+\omega_1)]</script><p>称$\cos(\omega_1 t) \Leftrightarrow\pi[\delta(\omega-\omega_1)+\delta(\omega+\omega_1)]$为傅里叶变换对。<br><img src="/2020/07/30/FFT-guide/cosineF.png" alt="cos的傅里叶变换"><br>在图形上是两个幅值为$\pi$频率$\omega=\pm\omega_1$的冲激函数 所以在乘上$\frac{1}{\pi}$后可以得到原来信号的幅值，由此我们找到了$\omega$ ~$A$的关系</p>
-</li>
-<li><p>实际处理的数据不同于上面的连续信号，这里要引入一个采样率$Fs$即一秒钟对信号进行多少次采样。例如对于$\cos(\omega_1 t)$ 来说，以采样率$Fs=1000$得到的信号就是一个这样的序列：[$\cos(0.001\omega_1),\cos(0.002\omega_1),\cos(0.003\omega_1),…$]。</p>
-</li>
-<li>由于实际处理的信号都是一个个离散的数值，我们对这些信号的处理称之为离散傅里叶变换DTF，在利用傅里叶变换的对称性优化后得到快速傅里叶变换即我们常用的FFT。(记住我们处理的是离散的数值序列就行。)</li>
-</ol>
-<h2><span id="dai-ma-shi-cao">代码实操</span><a href="#dai-ma-shi-cao" class="header-anchor">#</a></h2><p>这里用到的两个库: </p>
-<ul>
-<li><code>numpy</code> 包含常用的数学函数，我们要用的就是与fft相关的函数。</li>
-<li><code>matplotlib</code> 常用的画图库，语法与<code>MATLAB</code>类似。</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"></span><br><span class="line">Fs = <span class="number">100</span> <span class="comment">#每秒采样率</span></span><br><span class="line"> </span><br><span class="line">t = np.linspace(<span class="number">0</span>,<span class="number">2</span>,<span class="number">2</span>*Fs) <span class="comment">#2秒钟，每秒100个点 这句话是把[0,2]分成200个等间距序列</span></span><br><span class="line">signal = np.cos(<span class="number">2</span>*np.pi*<span class="number">1</span>*t) </span><br><span class="line">plt.scatter(t,signal)<span class="comment">#plt.plot(t,signal) 画曲线用plot 画离散点用scatter</span></span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
-<p>当我们将t和signal的作为坐标值得出下图<br><img src="/2020/07/30/FFT-guide/余弦离散点.png" alt="余弦离散点"><br>为了便于观看通常我们使用<code>plt.plot()</code>将相邻的点连接起来便会看到较为光滑的曲线。<br><img src="/2020/07/30/FFT-guide/余弦连线图.png" alt="余弦连线图"><br>采样率$Fs$越大，采集的点就会越密集。这里补充一个知识点：叫做奈奎斯特采样定理。简单的说就是我们可以采集到的频率范围是$[-\frac{Fs}{2},\frac{Fs}{2}]$</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"></span><br><span class="line">Fs = <span class="number">1000</span> <span class="comment">#每秒采样率</span></span><br><span class="line"> </span><br><span class="line">t = np.linspace(<span class="number">0</span>,<span class="number">2</span>,<span class="number">2</span>*Fs) <span class="comment">#2秒钟，每秒1000个点</span></span><br><span class="line">signal =<span class="number">2</span> * np.cos(<span class="number">2</span>*np.pi*<span class="number">1</span>*t) + <span class="number">0.2</span>*np.sin(<span class="number">2</span>*np.pi*<span class="number">30</span>*t)</span><br><span class="line">plt.plot(t, signal)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
-<p>这段程序中先确定了变量$t = [0,0.001,0.002,…,1.999,2]$<br>这里我们生成一个幅值为 2  频率为 1Hz 的余弦与一个幅值为  0.2  频率为  30Hz  的正弦相加$Signal = 2\cos(2\pi t)+0.2\sin(2\pi\times30t)$根据t的不同取值得到得到一个与之对应的信号序列。使用<code>plt.plot(t, signal)</code>画图后可以得到下图。<br><img src="/2020/07/30/FFT-guide/低频余弦加高频正弦.png" alt="低频余弦加高频正弦"></p>
-<p>接下来我们对这个信号进行傅里叶变换，具体实现如下。其中<code>np.fft.fftfreq(n, d=1/Fs)</code>是把计算的值换算到常用的以Hz为单位的坐标轴，范围就是之前提到的$[-\frac{Fs}{2},\frac{Fs}{2}]$。傅里叶变换得到的频率信号是[0, 0.1, … , 499.9, 500,-500,-499.9, …, -0.1]。<code>np.fft.fftshift(freq)</code>的作用是把频率从小到大重新排列。<code>F_disp</code>也是同理。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">F = np.fft.fft(signal)</span><br><span class="line">n = signal.size</span><br><span class="line">freq =  np.fft.fftshift( np.fft.fftfreq(n, d=<span class="number">1</span>/Fs))</span><br><span class="line">F_disp =  np.fft.fftshift(F)</span><br><span class="line">plt.subplot(<span class="number">211</span>), plt.plot(freq, (<span class="number">2</span>*np.abs( F_disp )/n)) </span><br><span class="line">plt.subplot(<span class="number">212</span>), plt.plot(freq, (np.angle( F_disp )/np.pi*<span class="number">180</span>))</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure><br>在二维平面上我们使用幅值和相位来描述这个信号。(<code>np.abs(a)</code>，若a是复数，返回a的模，否则就是a的绝对值。)通过<code>plt</code>画图得到下图，代表了幅值和相位随频率的变化。<code>(2*np.abs( F_disp )/n)</code>对应的就是预备知识中的第五点，连续函数乘上$\frac{1}{\pi}$， 离散序列乘上$\frac{1}{\frac{n}{2}}$也就是$\frac{2}{n}$。($2\pi$对应$n$， $\pi$对应$\frac{n}{2}$)<br><img src="/2020/07/30/FFT-guide/fft_out.png" alt="fft结果"><br>对幅值和相位不是很敏感的同学可以绘制3D图来理解FFT的结果，这里我们设置x轴为频率，y轴为实部，z轴为虚部。<br><img src="/2020/07/30/FFT-guide/3D_fft.gif" alt="3D_FFT"><br>绘制3D图的程序如下<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">ax = plt.axes(projection=<span class="string">'3d'</span>)</span><br><span class="line">ax.set_zlim(<span class="number">-2</span>,<span class="number">2</span>)</span><br><span class="line">ax.set_ylim(<span class="number">-2</span>,<span class="number">2</span>)</span><br><span class="line">ax.set_xlim(<span class="number">-50</span>,<span class="number">50</span>)</span><br><span class="line">ax.plot3D(freq  ,<span class="number">2</span>*F_disp.imag/n, <span class="number">2</span>*F_disp.real/n)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure><br>由于我们的采样率$Fs = 1000$,这就意味着我们的的频率范围是$[-500,500]$。为了方便观察，我们将只选取频率在[-40, 40]的范围进行观察。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">freq_band = np.logical_and(freq&gt;<span class="number">-40</span>, freq&lt;<span class="number">40</span>)</span><br><span class="line">plt.plot(freq[freq_band], (<span class="number">2</span>*np.abs( F_disp[freq_band])/n))</span><br></pre></td></tr></table></figure>
-<p><img src="/2020/07/30/FFT-guide/fft_out_band.png" alt="freq_band信号"><br>虽然点击对话框上的放大镜可以实现放大观察，但是<code>freq_band = np.logical_and(freq&gt;-40, freq&lt;40)</code>将[-40,40]之间的频率信号保留下来，为我们接下来的滤波打下基础。<br><img src="/2020/07/30/FFT-guide/bandFreq_UI.png" alt="bandFreq_UI"><br>现实处理的信号也与我们之前处理的$Singal$类似，我们希望得到的信号通常是频率较低幅值较大，对应$2\cos(2\pi t)$，夹杂的噪声通常是频率较高幅值较小,对应$0.2\sin(2\pi\times30t)$<br>接下来我们将30Hz的正弦波滤去还原一个平滑的余弦波。</p>
-<ul>
-<li><code>np.logical_or(freq&lt;-5, freq&gt;5)</code>选取频率小于-5和大于5的区域，</li>
-<li><code>F_disp[freq_band_filter] = 0</code>将这些区域的数值置零</li>
-<li>绘制频谱发现30Hz处的尖峰已经滤除<br><img src="/2020/07/30/FFT-guide/filter_freq.png" alt="filter_freq"></li>
-<li>由于我们刚刚处理的是平移过的频谱，因此在傅里叶逆变换还原信号前需要使用<code>np.fft.fftshift(F_disp)</code>进行频谱平移，再使用<code>np.fft.ifft()</code>还原信号<br><img src="/2020/07/30/FFT-guide/filter_sig.png" alt="filter_sig"><ul>
-<li>滤除高频噪声后就能得到我们想要的低频信号。<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">freq_band_filter = np.logical_or(freq&lt;<span class="number">-5</span>, freq&gt;<span class="number">5</span>)</span><br><span class="line">F_disp[freq_band_filter] = <span class="number">0</span></span><br><span class="line">plt.plot(freq[freq_band], (<span class="number">2</span>*np.abs( F_disp[freq_band])/n)) </span><br><span class="line">filter_sig = np.fft.ifft(np.fft.fftshift(F_disp))</span><br><span class="line">plt.plot(t,filter_sig)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
-<h2><span id="xin-dian-xin-hao-chu-li">心电信号处理</span><a href="#xin-dian-xin-hao-chu-li" class="header-anchor">#</a></h2><h3><span id="shu-ju-ku-jian-jie-wrist-ppg-during-exercise">数据库简介 Wrist PPG During Exercise</span><a href="#shu-ju-ku-jian-jie-wrist-ppg-during-exercise" class="header-anchor">#</a></h3></li>
-</ul>
-</li>
-</ul>
-<p>数据库包含了在步行，跑步和骑自行车过程中记录的腕部 PPGs。同时使用加速度计和陀螺仪进行运动估计，为消除运动对PPG干扰提供多种选择。并记录了胸部心电图作为运动心率的参考标准。</p>
-<p><a href="https://physionet.org/content/wrist/1.0.0/" target="_blank" rel="noopener">心率数据 https://physionet.org/content/wrist/1.0.0/</a></p>
-<p>Delaram Jarchi and Alexander J. Casson. Description of a Database Containing Wrist PPG Signals Recorded during Physical Exercise with Both Accelerometer and Gyroscope Measures of Motion. Data 2017, 2(1), 1; doi:10.3390/data2010001</p>
-<p>Goldberger, A., Amaral, L., Glass, L., Hausdorff, J., Ivanov, P. C., Mark, R., … &amp; Stanley, H. E. (2000). PhysioBank, PhysioToolkit, and PhysioNet: Components of a new research resource for complex physiologic signals. Circulation [Online]. 101 (23), pp. e215–e220.</p>
-<h3><span id="ecg-xin-hao-chu-li">ECG信号处理</span><a href="#ecg-xin-hao-chu-li" class="header-anchor">#</a></h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"><span class="keyword">import</span> wfdb</span><br></pre></td></tr></table></figure>
-<p>心率数据数据都是使用 <code>WFDB</code> 格式保存的,这里我们需要加载wfdb的库。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">path = <span class="string">".\PPG\s2_walk"</span></span><br><span class="line">sampFrom = <span class="number">0</span></span><br><span class="line">sampLen = <span class="number">4000</span></span><br><span class="line">sampTo = sampFrom+sampLen</span><br><span class="line"></span><br><span class="line">record = wfdb.rdrecord(path, channels=[<span class="number">0</span>,<span class="number">1</span>],sampfrom=sampFrom, sampto=sampTo)</span><br><span class="line">annotation = wfdb.rdann(path, <span class="string">"atr"</span>, sampfrom=sampFrom, sampto=sampTo)</span><br><span class="line">wfdb.plot_wfdb(record=record,annotation=annotation,title=<span class="string">"ecg"</span>,time_units=<span class="string">"seconds"</span>)</span><br><span class="line">print(<span class="string">"anno aver heart rate:"</span>,len(annotation.sample)*Fs/sampLen*<span class="number">60</span>)</span><br></pre></td></tr></table></figure>
-<p>可以得到以下图形，上半部分为ECG数据，R峰处用红点标记（红点使用数据库自带的标记标出的）。下半部分图是同一时刻对应点PPG数据 。<br><img src="/2020/07/30/FFT-guide/心率原始数据绘制.png" alt="wfdb_plot"></p>
-<p>接下来读取ECG信号波形做傅里叶变换，绘制频谱<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">signals, fields = wfdb.rdsamp(path, channels=[<span class="number">0</span>,<span class="number">1</span>], sampfrom=sampFrom, sampto=sampTo)</span><br><span class="line">ecg = signals[:,<span class="number">0</span>]</span><br><span class="line">ppg = signals[:,<span class="number">1</span>]</span><br><span class="line">Fs = fields[<span class="string">'fs'</span>] <span class="comment"># 读取采样率</span></span><br><span class="line">n = ecg.size <span class="comment">#采样点个数</span></span><br><span class="line">F_sig = np.fft.fft(ecg)<span class="comment">#对ecg做傅里叶变换</span></span><br><span class="line">freq = np.fft.fftfreq(n, d=<span class="number">1</span>/Fs)<span class="comment">#折合到频域Hz</span></span><br><span class="line">plt.figure()</span><br><span class="line">plt.plot(freq[freq&gt;<span class="number">0</span>],<span class="number">2</span>*np.abs(F_sig[freq&gt;<span class="number">0</span>])/n)<span class="comment">#这里只绘制频率大于0的部分</span></span><br></pre></td></tr></table></figure><br><img src="/2020/07/30/FFT-guide/ECG频谱.png" alt="ecg频谱"></p>
-<p>可以看到频率大多集中在低频部分，观察放大R峰的图形可以发现一个尖峰的频率在15-20Hz，因此我们将频谱中频率小于15Hz的剔除，再求逆变换。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">filter_F = F_sig[:].copy()<span class="comment">#先复制一份频域数据</span></span><br><span class="line">filter_F[np.abs(freq)&lt;<span class="number">15</span>] = <span class="number">0</span> <span class="comment">#高通滤波 低于15Hz 的都是0  ，观察图像可知 R峰的频率在15 - 20 Hz</span></span><br><span class="line">filter_sig = np.fft.ifft(filter_F).real <span class="comment">#傅里叶逆变换取实部</span></span><br><span class="line">plt.figure()</span><br><span class="line">plt.plot(filter_sig)</span><br></pre></td></tr></table></figure><br><img src="/2020/07/30/FFT-guide/高通滤波后.png" alt="高通滤波后"><br>观察滤波后的图形可以看出R峰在图中已经十分明显。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">winSize = <span class="number">25</span> <span class="comment">#设置一个窗口大小 </span></span><br><span class="line">thre = <span class="number">5.5</span> * np.mean(np.abs(filter_sig))<span class="comment">#对滤波后的数据取绝对值再求平均 乘上一个系数作为 选择R峰点的一个门限</span></span><br><span class="line">sq_sig = filter_sig.copy().reshape(int(filter_sig.size/winSize),winSize)<span class="comment">#将滤波后的数据 以winSize为一排 重新排列  这里将其变换成 25 * 160的矩阵</span></span><br><span class="line">peakList = [] <span class="comment">#先设置一个R峰列表 所有的R峰数据都存进去</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(len(sq_sig)):<span class="comment">#对每一行数据进行处理</span></span><br><span class="line">    norm = np.abs(sq_sig[i]) <span class="comment">#对每一行数据取模</span></span><br><span class="line">    aver = np.mean(norm) <span class="comment">#每一行数据的模求平均</span></span><br><span class="line">    win_max = np.max(sq_sig[i])<span class="comment">#每一行数据的最大值</span></span><br><span class="line">    <span class="keyword">if</span> np.abs(win_max/aver) &lt; <span class="number">2.5</span> <span class="keyword">or</span> win_max &lt; thre: </span><br><span class="line">        sq_sig[i][:] = <span class="number">0</span> <span class="comment">#如果最大值/平均值&lt;2.5 或者最大值小于门限值 则该行清零</span></span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        localIndex = sq_sig[i].tolist().index(win_max)<span class="comment">#找到最大值在该行的索引</span></span><br><span class="line">        peakList.append(localIndex + winSize * i)<span class="comment">#求出最大值在整个信号上的索引</span></span><br><span class="line">new_sig = sq_sig.flatten() <span class="comment">#将矩阵重整为一维数据</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">sortPeakList =[peakList[<span class="number">0</span>]]<span class="comment">#离得太近的最大值取较大的哪一个 存入这个列表中</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">1</span>,len(peakList)):<span class="comment">#第一个不用处理</span></span><br><span class="line">    front = peakList[i]</span><br><span class="line">    behind = sortPeakList[<span class="number">-1</span>]<span class="comment">#列表中的最后一个值</span></span><br><span class="line">    <span class="keyword">if</span>  front- behind &lt; <span class="number">20</span>:<span class="comment">#当下一个值与整理后的的值太近时</span></span><br><span class="line">        <span class="keyword">if</span> ecg[front] &gt;ecg[behind]: <span class="comment">#删去小的 存入大的</span></span><br><span class="line">            sortPeakList.pop(<span class="number">-1</span>)</span><br><span class="line">            sortPeakList.append(front)</span><br><span class="line">    <span class="keyword">else</span>: <span class="comment">#如果距离足够远则直接存入</span></span><br><span class="line">        sortPeakList.append(front)</span><br><span class="line"><span class="comment"># print(len(sortPeakList))</span></span><br><span class="line">yPeak = [ecg[x] <span class="keyword">for</span> x <span class="keyword">in</span> sortPeakList]<span class="comment">#根据刚刚整理过的R峰横坐标从数据中找出纵坐标y       </span></span><br><span class="line">plt.figure()</span><br><span class="line">print(<span class="string">"calc aver heart rate:"</span>,len(sortPeakList)*Fs/sampLen*<span class="number">60</span>)</span><br><span class="line">plt.subplot(<span class="number">212</span>)</span><br><span class="line">plt.plot(ecg)<span class="comment">#在ecg上画出找到的R峰</span></span><br><span class="line">plt.scatter(sortPeakList, yPeak, color=<span class="string">'red'</span>)</span><br><span class="line"></span><br><span class="line">plt.subplot(<span class="number">211</span>)</span><br><span class="line">plt.plot(filter_sig,color=<span class="string">"g"</span>)<span class="comment">#绿色为15Hz高通滤波后数据</span></span><br><span class="line">plt.plot(new_sig,color = <span class="string">"r"</span>)<span class="comment">#红色是找R峰处理后的数据</span></span><br></pre></td></tr></table></figure><br><img src="/2020/07/30/FFT-guide/自己标记R峰.png" alt="求出R峰"><br>可以看到自己求得的R峰与最初数据库的值几乎一致，实现了对ECG信号找R峰求心率的目的。</p>
-
-      
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/07/30/FFT-guide/" rel="prev" title="FFT-guide">
+      <i class="fa fa-chevron-left"></i> FFT-guide
+    </a></div>
+      <div class="post-nav-item"></div>
     </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
       </footer>
+    
   </article>
   
   
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/06/My-py-program/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="lclee">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog-lclee">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/07/06/My-py-program/" class="post-title-link" itemprop="url">My_py_program </a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-07-06 11:17:34" itemprop="dateCreated datePublished" datetime="2020-07-06T11:17:34+08:00">2020-07-06</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-07-13 19:25:58" itemprop="dateModified" datetime="2020-07-13T19:25:58+08:00">2020-07-13</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2><span id="my-py-program-jian-jie">My_py_program 简介</span><a href="#my-py-program-jian-jie" class="header-anchor">#</a></h2><h3><span id="zhui-ju-jiao-ben">追剧脚本</span><a href="#zhui-ju-jiao-ben" class="header-anchor">#</a></h3><h3><span id="te-xiao-zi-ti-jian-cha">特效字体检查</span><a href="#te-xiao-zi-ti-jian-cha" class="header-anchor">#</a></h3><h3><span id="linux-deploy-bu-shu-dao-shou-ji">linux deploy 部署到手机</span><a href="#linux-deploy-bu-shu-dao-shou-ji" class="header-anchor">#</a></h3>
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/06/hexo-init/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="lclee">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog-lclee">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/07/06/hexo-init/" class="post-title-link" itemprop="url">Hexo Init</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-07-06 09:55:18" itemprop="dateCreated datePublished" datetime="2020-07-06T09:55:18+08:00">2020-07-06</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-08-04 19:36:25" itemprop="dateModified" datetime="2020-08-04T19:36:25+08:00">2020-08-04</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2><span id="qian-ti-zhun-bei">前提准备</span><a href="#qian-ti-zhun-bei" class="header-anchor">#</a></h2><p> <a href="https://nodejs.org/en/" target="_blank" rel="noopener">Node.js</a><br> <a href="https://git-scm.com/" target="_blank" rel="noopener">Git</a></p>
-<h2><span id="hexo-an-zhuang">Hexo 安装</span><a href="#hexo-an-zhuang" class="header-anchor">#</a></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ npm install -g hexo</span><br></pre></td></tr></table></figure>
-<h2><span id="hexo-chu-shi-hua">Hexo 初始化</span><a href="#hexo-chu-shi-hua" class="header-anchor">#</a></h2><p>新建一个文件夹 (例如 Hexo-Blog) 进入并初始化</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ mkdir Hexo-Blog</span><br><span class="line">$ <span class="built_in">cd</span> Hexo-Blog</span><br><span class="line">$ hexo init</span><br></pre></td></tr></table></figure>
-<p>这个文件夹必须为空 否则无法初始化成功。当要删除文件夹中的<code>node_modules</code>子文件夹时要安装 <code>rimraf</code></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ npm install rimraf -g</span><br><span class="line">$ rimraf node_modules</span><br></pre></td></tr></table></figure>
-<h2><span id="xiu-gai-zhu-ti-bing-ying-yong">修改主题并应用</span><a href="#xiu-gai-zhu-ti-bing-ying-yong" class="header-anchor">#</a></h2><p>在当前文件夹 下载新主题<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git <span class="built_in">clone</span> https://github.com/theme-next/hexo-theme-next themes/next</span><br></pre></td></tr></table></figure><br>修改 <code>Hexo-Blog\_config.yml</code>文件中<code>theme</code>：<code>landscape</code>改为<code>next</code> </p>
-<p>修改 <code>themes\next\_config.yml</code> 中 <code>scheme</code>: <code>Muse</code> 改为 <code>Gemini</code><br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ hexo g <span class="comment">#生成文件</span></span><br><span class="line">$ hexo s <span class="comment">#启动服务</span></span><br></pre></td></tr></table></figure><br><code>hexo s</code> 是开启本地预览服务，或者直接<code>hexo s -g</code>生成并预览，打开浏览器访问 <a href="http://localhost:4000" target="_blank" rel="noopener">localhost:4000</a> 即可看到内容</p>
-<h2><span id="bu-shu-dao-github">部署到github</span><a href="#bu-shu-dao-github" class="header-anchor">#</a></h2><p>复制 <code>user\.ssh\id_rsa.pub</code> 到github账户的 <code>settints</code> - <code>SSH keys</code></p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">deploy:</span><br><span class="line">  type: git ##注意 这里有空格</span><br><span class="line">  repository: git@github.com:lclee0577/lclee.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
-<p>部署到github前要先安装hexo-deployer-git<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ npm install hexo-deployer-git  --save</span><br></pre></td></tr></table></figure><br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ hexo clean </span><br><span class="line">$ hexo d -g</span><br></pre></td></tr></table></figure></p>
-<h2><span id="yi-di-guan-li">异地管理</span><a href="#yi-di-guan-li" class="header-anchor">#</a></h2><p>创建hexo分支 并设置为默认分支<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cd</span> Hexo-Blog </span><br><span class="line">$ git init</span><br><span class="line">$ git branch hexo</span><br><span class="line">$ git remote add origin https://github.com/lclee0577/lclee0577.github.io.git</span><br></pre></td></tr></table></figure><br>在 github 网页端 <code>Settings</code> - <code>Branches</code> -<code>Default branch</code> 中将默认分支设置为<code>hexo</code> 并点击<code>update</code>确认。</p>
-<p>异地管理只需克隆hexo分支再编辑即可。</p>
-<h2><span id="cha-ru-markdown-mu-lu">插入markdown目录</span><a href="#cha-ru-markdown-mu-lu" class="header-anchor">#</a></h2><ul>
-<li>npm install hexo-toc —save</li>
-<li>配置文件_config.yml:</li>
-<li><pre><code class="lang-json">   toc:
-     maxdepth: 3
-     class: toc
-     slugify: transliteration
-     decodeEntities: false
-     anchor:
-       position: after
-       symbol: &#39;#&#39;
-       style: header-anchor
-</code></pre>
-</li>
-</ul>
-<ul>
-<li>使用`<div class="toc"></li>
-</ul>
-<!-- toc -->
-<ul>
-<li><a href="#cha-ru-latex">插入Latex</a></li>
-</ul>
-<!-- tocstop -->
-<p></div>` 将自动生成目录</p>
-<ul>
-<li>文章最上面与标题一起处添加 <code>toc: true</code></li>
-</ul>
-<h2><span id="cha-ru-latex">插入Latex</span><a href="#cha-ru-latex" class="header-anchor">#</a></h2><p>  <a href="https://www.jianshu.com/p/7ab21c7f0674" target="_blank" rel="noopener">https://www.jianshu.com/p/7ab21c7f0674</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-
   
 
 
@@ -806,6 +520,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#"><span class="nav-number">1.</span> <span class="nav-text">资源</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#"><span class="nav-number">2.</span> <span class="nav-text">P3. 构造函数</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#"><span class="nav-number">3.</span> <span class="nav-text">P4.参数传递和返回值</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">3.1.</span> <span class="nav-text">常量成员函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">3.2.</span> <span class="nav-text">返回值传递</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">3.3.</span> <span class="nav-text">friend(友元)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">3.4.</span> <span class="nav-text">class body外的各种定义</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#"><span class="nav-number">4.</span> <span class="nav-text">P5.操作符重载和临时变量</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">4.1.</span> <span class="nav-text">operator overloading(操作符重载-1,成员函数) this</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">4.2.</span> <span class="nav-text">operator overloading(操作符重载-2, 非成员函数) 无this</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">4.3.</span> <span class="nav-text">回顾</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#"><span class="nav-number">5.</span> <span class="nav-text">P7三大函数 拷贝构造 拷贝赋值 析构</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">5.1.</span> <span class="nav-text">Classes 的两个经典分类,是否包含指针</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">5.2.</span> <span class="nav-text">拷贝赋值函数</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#"><span class="nav-number">6.</span> <span class="nav-text">P8 堆、栈与内存管理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">6.1.</span> <span class="nav-text">stack 栈</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">6.2.</span> <span class="nav-text">heap 堆</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">6.3.</span> <span class="nav-text">静态对象 static local object</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">6.4.</span> <span class="nav-text">动态分配所得的内存块</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#"><span class="nav-number">7.</span> <span class="nav-text">P10 拓展补充 类模板, 函数模板等</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">7.1.</span> <span class="nav-text">static补充</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#"><span class="nav-number">8.</span> <span class="nav-text">P11. 组合和继承</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">8.1.</span> <span class="nav-text">Composition 复合, 表示has-a</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">8.2.</span> <span class="nav-text">Delegation 委托, composition by reference</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">8.3.</span> <span class="nav-text">Inheritance 继承 表示is-a</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#"><span class="nav-number">9.</span> <span class="nav-text">P10. 虚函数和多态</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">9.1.</span> <span class="nav-text">Inheritance with virtual functions</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">9.2.</span> <span class="nav-text">Delegation(委托) + Inheritance(继承)</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#"><span class="nav-number">10.</span> <span class="nav-text">P13. 委托相关设计</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">10.1.</span> <span class="nav-text">设计模式-组合设计(Composite)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">10.2.</span> <span class="nav-text">设计模式-原型模式</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#"><span class="nav-number">11.</span> <span class="nav-text">资源</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">11.1.</span> <span class="nav-text">P2.conversion function, 转换函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">11.2.</span> <span class="nav-text">non-explicit-one-argument ctor</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#"><span class="nav-number">12.</span> <span class="nav-text">P4.pointer-like classes, 关于智能指针</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#"><span class="nav-number">12.1.</span> <span class="nav-text">pointer-like classes, 迭代器</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#"><span class="nav-number">13.</span> <span class="nav-text">P5.function-like classes, 仿函数</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#"><span class="nav-number">14.</span> <span class="nav-text">P6.namespace, 经验谈</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#"><span class="nav-number">15.</span> <span class="nav-text">P7 and P8 .class template 类模板, function template 函数模板</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#"><span class="nav-number">16.</span> <span class="nav-text">P9. 成员模板</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -906,59 +621,6 @@
   
 
   
-      
-
-<script>
-  if (typeof MathJax === 'undefined') {
-    window.MathJax = {
-      loader: {
-        source: {
-          '[tex]/amsCd': '[tex]/amscd',
-          '[tex]/AMScd': '[tex]/amscd'
-        }
-      },
-      tex: {
-        inlineMath: {'[+]': [['$', '$']]},
-        tags: 'ams'
-      },
-      options: {
-        renderActions: {
-          findScript: [10, doc => {
-            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
-              const display = !!node.type.match(/; *mode=display/);
-              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
-              const text = document.createTextNode('');
-              node.parentNode.replaceChild(text, node);
-              math.start = {node: text, delim: '', n: 0};
-              math.end = {node: text, delim: '', n: 0};
-              doc.math.push(math);
-            });
-          }, '', false],
-          insertedScript: [200, () => {
-            document.querySelectorAll('mjx-container').forEach(node => {
-              let target = node.parentNode;
-              if (target.nodeName.toLowerCase() === 'li') {
-                target.parentNode.classList.add('has-jax');
-              }
-            });
-          }, '', false]
-        }
-      }
-    };
-    (function () {
-      var script = document.createElement('script');
-      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
-      script.defer = true;
-      document.head.appendChild(script);
-    })();
-  } else {
-    MathJax.startup.document.state(0);
-    MathJax.texReset();
-    MathJax.typeset();
-  }
-</script>
-
-    
 
   
 
