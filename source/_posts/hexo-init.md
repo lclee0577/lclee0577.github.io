@@ -35,6 +35,10 @@ $ git clone https://github.com/theme-next/hexo-theme-next themes/next
 修改 `Hexo-Blog\_config.yml`文件中`theme`：`landscape`改为`next` 
 
 修改 `themes\next\_config.yml` 中 `scheme`: `Muse` 改为 `Gemini`
+
+### 更新Next主题 
+- 记得把`themes\next\_config.yml` 中:`mathjax`的`enbale`设置为`true`
+
 ```bash
 $ hexo g #生成文件
 $ hexo s #启动服务
@@ -94,3 +98,5 @@ $ git remote add origin https://github.com/lclee0577/lclee0577.github.io.git
 ## 插入Latex
 
   https://www.jianshu.com/p/7ab21c7f0674
+
+  
