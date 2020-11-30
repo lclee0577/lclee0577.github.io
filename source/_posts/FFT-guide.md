@@ -121,3 +121,103 @@ filter_sig = np.fft.ifft(np.fft.fftshift(F_disp))
 plt.plot(t,filter_sig)
 plt.show()
 ```
+## 心电信号处理
+### 数据库简介 Wrist PPG During Exercise
+
+
+数据库包含了在步行，跑步和骑自行车过程中记录的腕部 PPGs。同时使用加速度计和陀螺仪进行运动估计，为消除运动对PPG干扰提供多种选择。并记录了胸部心电图作为运动心率的参考标准。
+
+[心率数据 https://physionet.org/content/wrist/1.0.0/](https://physionet.org/content/wrist/1.0.0/)
+
+Delaram Jarchi and Alexander J. Casson. Description of a Database Containing Wrist PPG Signals Recorded during Physical Exercise with Both Accelerometer and Gyroscope Measures of Motion. Data 2017, 2(1), 1; doi:10.3390/data2010001
+
+Goldberger, A., Amaral, L., Glass, L., Hausdorff, J., Ivanov, P. C., Mark, R., ... & Stanley, H. E. (2000). PhysioBank, PhysioToolkit, and PhysioNet: Components of a new research resource for complex physiologic signals. Circulation [Online]. 101 (23), pp. e215–e220.
+
+### ECG信号处理
+
+``` python
+import numpy as np
+import matplotlib.pyplot as plt
+import wfdb
+```
+心率数据数据都是使用 `WFDB` 格式保存的,这里我们需要加载wfdb的库。
+
+``` python 
+    path = ".\PPG\s2_walk"
+    sampFrom = 0
+    sampLen = 4000
+    sampTo = sampFrom+sampLen
+
+    record = wfdb.rdrecord(path, channels=[0,1],sampfrom=sampFrom, sampto=sampTo)
+    annotation = wfdb.rdann(path, "atr", sampfrom=sampFrom, sampto=sampTo)
+    wfdb.plot_wfdb(record=record,annotation=annotation,title="ecg",time_units="seconds")
+    print("anno aver heart rate:",len(annotation.sample)*Fs/sampLen*60)
+```
+可以得到以下图形，上半部分为ECG数据，R峰处用红点标记（红点使用数据库自带的标记标出的）。下半部分图是同一时刻对应点PPG数据 。
+![wfdb_plot](./FFT-guide/心率原始数据绘制.png)
+
+接下来读取ECG信号波形做傅里叶变换，绘制频谱
+```python
+   signals, fields = wfdb.rdsamp(path, channels=[0,1], sampfrom=sampFrom, sampto=sampTo)
+   ecg = signals[:,0]
+   ppg = signals[:,1]
+   Fs = fields['fs'] # 读取采样率
+   n = ecg.size #采样点个数
+   F_sig = np.fft.fft(ecg)#对ecg做傅里叶变换
+   freq = np.fft.fftfreq(n, d=1/Fs)#折合到频域Hz
+   plt.figure()
+   plt.plot(freq[freq>0],2*np.abs(F_sig[freq>0])/n)#这里只绘制频率大于0的部分
+```
+![ecg频谱](FFT-guide/ECG频谱.png)
+
+可以看到频率大多集中在低频部分，观察放大R峰的图形可以发现一个尖峰的频率在15-20Hz，因此我们将频谱中频率小于15Hz的剔除，再求逆变换。
+```python
+   filter_F = F_sig[:].copy()#先复制一份频域数据
+   filter_F[np.abs(freq)<15] = 0 #高通滤波 低于15Hz 的都是0  ，观察图像可知 R峰的频率在15 - 20 Hz
+   filter_sig = np.fft.ifft(filter_F).real #傅里叶逆变换取实部
+   plt.figure()
+   plt.plot(filter_sig)
+```
+![高通滤波后](FFT-guide/高通滤波后.png)
+观察滤波后的图形可以看出R峰在图中已经十分明显。
+```python
+    winSize = 25 #设置一个窗口大小 
+    thre = 5.5 * np.mean(np.abs(filter_sig))#对滤波后的数据取绝对值再求平均 乘上一个系数作为 选择R峰点的一个门限
+    sq_sig = filter_sig.copy().reshape(int(filter_sig.size/winSize),winSize)#将滤波后的数据 以winSize为一排 重新排列  这里将其变换成 25 * 160的矩阵
+    peakList = [] #先设置一个R峰列表 所有的R峰数据都存进去
+    for i in range(len(sq_sig)):#对每一行数据进行处理
+        norm = np.abs(sq_sig[i]) #对每一行数据取模
+        aver = np.mean(norm) #每一行数据的模求平均
+        win_max = np.max(sq_sig[i])#每一行数据的最大值
+        if np.abs(win_max/aver) < 2.5 or win_max < thre: 
+            sq_sig[i][:] = 0 #如果最大值/平均值<2.5 或者最大值小于门限值 则该行清零
+        else:
+            localIndex = sq_sig[i].tolist().index(win_max)#找到最大值在该行的索引
+            peakList.append(localIndex + winSize * i)#求出最大值在整个信号上的索引
+    new_sig = sq_sig.flatten() #将矩阵重整为一维数据
+
+
+    sortPeakList =[peakList[0]]#离得太近的最大值取较大的哪一个 存入这个列表中
+    for i in range(1,len(peakList)):#第一个不用处理
+        front = peakList[i]
+        behind = sortPeakList[-1]#列表中的最后一个值
+        if  front- behind < 20:#当下一个值与整理后的的值太近时
+            if ecg[front] >ecg[behind]: #删去小的 存入大的
+                sortPeakList.pop(-1)
+                sortPeakList.append(front)
+        else: #如果距离足够远则直接存入
+            sortPeakList.append(front)
+    # print(len(sortPeakList))
+    yPeak = [ecg[x] for x in sortPeakList]#根据刚刚整理过的R峰横坐标从数据中找出纵坐标y       
+    plt.figure()
+    print("calc aver heart rate:",len(sortPeakList)*Fs/sampLen*60)
+    plt.subplot(212)
+    plt.plot(ecg)#在ecg上画出找到的R峰
+    plt.scatter(sortPeakList, yPeak, color='red')
+
+    plt.subplot(211)
+    plt.plot(filter_sig,color="g")#绿色为15Hz高通滤波后数据
+    plt.plot(new_sig,color = "r")#红色是找R峰处理后的数据
+```
+![求出R峰](FFT-guide/自己标记R峰.png)
+可以看到自己求得的R峰与最初数据库的值几乎一致，实现了对ECG信号找R峰求心率的目的。
