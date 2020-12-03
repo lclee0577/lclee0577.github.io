@@ -2,6 +2,7 @@
 title: Hexo Init
 date: 2020-07-06 09:55:18
 tags:
+categories: 杂项
 ---
 ## 前提准备
  [Node.js](https://nodejs.org/en/)  
@@ -36,6 +37,11 @@ $ git clone https://github.com/theme-next/hexo-theme-next themes/next
 
 修改 `themes\next\_config.yml` 中 `scheme`: `Muse` 改为 `Gemini`
 
+在`themes\next\_config.yml` 中 `menu`取消标签和分类的注释
+```json
+  tags: /tags/ || fa fa-tags
+  categories: /categories/ || fa fa-th
+```
 ### 更新Next主题 
 - 记得把`themes\next\_config.yml` 中:`mathjax`的`enbale`设置为`true`
 

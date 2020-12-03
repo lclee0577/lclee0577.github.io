@@ -2,6 +2,7 @@
 title: 'My_py_program '
 date: 2020-07-06 11:17:34
 tags:
+categories: 杂项
 ---
 
 ## My_py_program 简介
