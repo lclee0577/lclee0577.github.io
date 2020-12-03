@@ -680,7 +680,7 @@ auto ite = find(c.begin(),c.end(),target);//代替上面3,4行
 ## range-base for (C++11)
 语法糖 方便`for`循环 语法如下
 ```cpp
-for(decl:coll)//decl-元素，coll-容器。将容器中的元素一个个取出来
+for(decl:coll)//decl-声明，coll-容器。将容器中的元素一个个取出来
 {
   statement
 }
