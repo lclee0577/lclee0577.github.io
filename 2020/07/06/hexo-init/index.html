@@ -28,7 +28,7 @@
 <meta property="og:description" content="前提准备# Node.js Git Hexo 安装#1$ npm install -g hexo Hexo 初始化#新建一个文件夹 (例如 Hexo-Blog) 进入并初始化 123$ mkdir Hexo-Blog$ cd Hexo-Blog$ hexo init 这个文件夹必须为空 否则无法初始化成功。当要删除文件夹中的node_modules子文件夹时要安装 rimraf 12$ npm i">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2020-07-06T01:55:18.000Z">
-<meta property="article:modified_time" content="2020-11-30T03:52:29.351Z">
+<meta property="article:modified_time" content="2020-12-03T00:57:31.156Z">
 <meta property="article:author" content="lclee">
 <meta name="twitter:card" content="summary">
 
@@ -117,6 +117,16 @@
     <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
 
   </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
         <li class="menu-item menu-item-archives">
 
     <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
@@ -136,6 +146,7 @@
     <i class="fa fa-arrow-up"></i>
     <span>0%</span>
   </div>
+  <div class="reading-progress-bar"></div>
 
 
     <main class="main">
@@ -180,8 +191,17 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-11-30 11:52:29" itemprop="dateModified" datetime="2020-11-30T11:52:29+08:00">2020-11-30</time>
+                <time title="Modified: 2020-12-03 08:57:31" itemprop="dateModified" datetime="2020-12-03T08:57:31+08:00">2020-12-03</time>
               </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%9D%82%E9%A1%B9/" itemprop="url" rel="index"><span itemprop="name">杂项</span></a>
+                </span>
+            </span>
 
           
 
@@ -202,6 +222,7 @@
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ npm install rimraf -g</span><br><span class="line">$ rimraf node_modules</span><br></pre></td></tr></table></figure>
 <h2><span id="xiu-gai-zhu-ti-bing-ying-yong">修改主题并应用</span><a href="#xiu-gai-zhu-ti-bing-ying-yong" class="header-anchor">#</a></h2><p>在当前文件夹 下载新主题<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git <span class="built_in">clone</span> https://github.com/theme-next/hexo-theme-next themes/next</span><br></pre></td></tr></table></figure><br>修改 <code>Hexo-Blog\_config.yml</code>文件中<code>theme</code>：<code>landscape</code>改为<code>next</code> </p>
 <p>修改 <code>themes\next\_config.yml</code> 中 <code>scheme</code>: <code>Muse</code> 改为 <code>Gemini</code></p>
+<p>在<code>themes\next\_config.yml</code> 中 <code>menu</code>取消标签和分类的注释<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">tags: /tags/ || fa fa-tags</span><br><span class="line">categories: /categories/ || fa fa-th</span><br></pre></td></tr></table></figure></p>
 <h3><span id="geng-xin-next-zhu-ti">更新Next主题</span><a href="#geng-xin-next-zhu-ti" class="header-anchor">#</a></h3><ul>
 <li>记得把<code>themes\next\_config.yml</code> 中:<code>mathjax</code>的<code>enbale</code>设置为<code>true</code></li>
 </ul>
@@ -331,9 +352,21 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">4</span>
+          <span class="site-state-item-count">5</span>
           <span class="site-state-item-name">posts</span>
         </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
 </div>
