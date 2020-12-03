@@ -2,11 +2,11 @@
 title: C++笔记
 date: 2020-11-24 08:50:30
 tags:
-toc: true 
+toc: true
+categories: C++
 ---
 <!-- toc -->
-
-# 资源
+# 上篇 
 
 视频网址 https://www.bilibili.com/video/BV1aW411H7Xa?p=1
 
@@ -375,7 +375,7 @@ class Ellipse:public Shape{···};
 
 ---
 
-# 资源
+# 下篇
 
 C++ 程序设计(Ⅱ) https://www.bilibili.com/video/av19151507?p=1&t=62
 
@@ -412,7 +412,7 @@ class Fraction
         
     Fraction operator+(const Fraction& f) 
     {
-      //...
+      //···
       return f; 
     } 
   private:   
@@ -438,7 +438,7 @@ public:
  	}
  	
  	Fraction operator+(const Fraction& f) {  
-	   //... plus
+	   //··· plus
 	   return f; 
 	} 
 
@@ -471,12 +471,12 @@ class shared_ptr
   private:
     T*    px;
     long* pn;
-    //...
+    //···
 };
 
 class Foo
 {
-  //...
+  //···
   void method(void){}
 }
 
@@ -488,7 +488,7 @@ sp->method();//  转换为 px->method(),  sp-> 重载后 ->会继续作用 即 (
 ```
 
 * \* 称之为 解引用
-* `operator->()`重载后 会继续作用 `->`
+*  `operator->()`重载后 会继续作用 `->`
 
 ## pointer-like classes, 迭代器
 
@@ -561,5 +561,272 @@ namespace jj01
   }
 }
 ```
+- 通常`T1` 是`U1`的父类,`T2`是`U2`的父类.可以实现继承和多态的巧妙使用,如`26`行.反正则不行,如`31`行.
+- 父类的指针可以指向子类 如`38`行
+
+# P10.specialization, 模板特化
+在模板类中指定某一个类型进行表述
+```cpp {.line-numbers}
+template <class Key>
+struct hash{ };
+
+template <>
+struct hash<char>{
+  size_t operator()(char x) const { return x;}
+};
+```
+# P11.partial specialization, 模板偏特化
+- 个数的偏,指定某个参数
+```cpp
+template<typename T, typename Alloc=···>
+class vector
+{
+  ···
+};
+
+template<typename Alloc=···>
+class vector<bool,Alloc>
+{
+  ···
+};
+```
+在c++中,最小的单元是`char`,用来表示`bool`空间利用率不高，因此需要重新设计针对`bool`的`vector`.
+
+- 范围上的偏,将范围由任意类型变为指针类型
+```cpp{.line-numbers}
+ template <typename T>
+ class C
+ {
+   ···
+ }
+
+ template <typename T>
+ class C<T*>
+ {
+   ···
+ };
+
+C<string>  obj1;//调用第2行
+C<string*> obj2;//调用第8行
+```
+
+# P12.template template parameter,模板模板参数
+- 模板的参数也是模板
+```cpp
+template<typename T,
+        template<typename T>
+        class Container
+        >
+class XCls
+{
+    private:
+      Container<T> c;
+    public:
+      ···
+};
+
+template <typename T>
+using Lst = list<T,allocator<T>>;//在下一门课程讲解
+//XCls <string,list> mylst1; 错误，list 接受两个参数要用上一行所示才能运行
+XCls<string,Lst>; mylst2
+```
+- 私有变量 `mylst2.c`的类型就是 `list<string>`
+- 下面这个不是模板模板参数
+```cpp
+template <class T, class Sequence = deque<T>>
+class stack{
+  ···
+}
+
+stack<int,list<int>> s2;
+```
+若前面是`int`,后面必须是`list<int>`,因此不是模板模板参数,
+
+p13.介绍标准库, 尽量每个函数都去用一遍
+
+# P14. 三个主题
+## variadic template (C++11) 数量不定模板参数
+- 注意: `...`是语法的一部分,表示这是一个包(pack)
+```cpp{.line-numbers}
+void print(){ }
+
+template <typename T, typename... Types>
+void print(const T& firstArg, const Types&... args)
+{
+  cout<< firstArg<<endl;
+  print(args...);//递归调用
+}
+print(7.5,"hello",bitset<16>(377),42)
+// 7.5
+// hello
+// 0000000101111001
+// 42
+```
+- 当执行第`9`行打印，参数被分成`7.5`和后面的一包(pack)，调用第`4`行，打印第一个参数，如此递归至最后一个发现没有参数，调用第`1`行 什么也不做，停止递归。
+## auto (C++11)
+ - auto 语法糖 用于类型推导
+```cpp {.line-numbers}
+lsit<string> c;
+···
+list<string>::iterator ite;
+ite = find(c.begin(),c.end(),target);
+```
+
+由于写出迭代器的类型比较繁琐可以使用auto进行类型推导
+```cpp
+auto ite = find(c.begin(),c.end(),target);//代替上面3,4行
+```
+
+## range-base for (C++11)
+语法糖 方便`for`循环 语法如下
+```cpp
+for(decl:coll)//decl-元素，coll-容器。将容器中的元素一个个取出来
+{
+  statement
+}
+```
+如下面的例子
+```cpp
+for(int i :{2,3,4,5,6})// {···} 为c++11中新增的容器类型
+{
+  cout << i << endl;
+}
+
+vector<double> vec
+···//给容器添加一些值
+for(auto elem:vec)
+{
+  cout << elem << endl; //传值 pass by value
+}
+
+for(auto& elem:vec)
+{
+  elem *= 3; //传引用 pass by reference 修改容器内部值
+}  
+
+```
+# P15 reference
+```cpp
+int x = 0;
+int* p = &x; 
+int& r = x;//r代表x，现在r，x都是0
+int x2 = 5;
+
+r = x2;// r不能重新代表其他变量，这句话相当于给r代表的x赋值，即x = x2，现在r，x2都是5
+int& r2 = r;//r2代表r，相当于代表x，所以r2是5
+```
+- 引用智能绑定一次
+- `sizeof(r) == sizeof(x)`
+- `&x == &r` 
+- `object` 和其`reference`的大小地址都相同(编译器帮助实现，其实是假象)
+
+## reference 的常见用途
+- reference 通常不用于声明变量，而用于参数类型(parameter type)和返回类型(return type)
+```cpp {.line-numbers}
+void func1(Cls* pobj){ pobj->xxx(); }
+void func2(Cls  obj ){  obj->xxx(); }
+void func3(Cls& obj ){  obj->xxx(); }
+
+··· 
+Cls obj;
+func1(&obj);
+func2(obj);
+func3(obj);
+```
+- 在函数内部传值和传引用调用函数的写法相同
+- 在外部传入参数，传值和传引用的接口也相同
 
 
+```cpp
+double imag(const double& im) {···}
+double imag(const double  im) {···}
+```
+- 这两个函数不能共存，因为它们的函数签名相同
+- 函数括号后的const 也是函数签名的一部分，函数签名不包括前面的返回类型
+
+# P16. 复合 +  继承关系下的构造和析构
+复习之前课程
+
+# P17.关于vptr和vtbl
+- 带着虚函数的类会比类内生命数据加起来还要大（因为虚函数要占用一个指针）
+- 类的继承：继承了成员和函数的调用权
+- 虚函数的虚指针vptr指向虚表vtbl，虚表里放着要调用的虚函数的地址
+- 当改写继承的虚函数就是修改了虚标里的函数指针，
+- 多态中 动态绑定：1.通过指针指向某类（某个子类）；2.指针向上转型；3.调用虚函数
+- 静态绑定: 调用函数直接跳转到某个地址 
+- 动态绑定的C描述`(*p->vptr[n])(p)`
+
+# 关于this 
+- 使用动态绑定重新讲解`Template Method`
+```cpp {.line-numbers}
+CDocument::OnFileOpen()
+{
+  ···
+  Serialize();//它的定义是个虚函数，由子类实现
+  ···
+}
+virtual Serialize();
+
+class CMyDoc:public CDocument
+{
+  virtual Serialize(){···}
+}
+
+main()
+{
+  CMyDoc myDoc;
+  ···
+  myDoc.OnFileOpen();//
+}
+```
+- 虽然子类调用的是从父类继承的函数(`18`行)，但是其中的虚函数已经在子类改写过(`11`行),就会以动态绑定的方式执行子类重新定义过的虚函数
+
+# P18.关于Dynamic Binging(1)
+## 谈谈 const
+- const 只能加在成员函数参数括号之后，函数体花括号之前，意为没有修改类成员
+- const obj 不能调用 non-const member function
+```cpp
+const String str("hello world");
+str.print()
+```
+- 若设计`string::print()` 没有指明`const` 那么`str.print()`无法通过编译。
+- 当成员函数的`const`和`non-const`版本同时存在时，`const obj`,只能调用`const`版本，`non-const obj`,只能调用`non-const`版本
+
+# P19.关于Dynamic Binging
+- 继承关系:`A<-B<-C`
+  ```cpp {.line-numbers}
+  B b;
+  A a =(A)b;
+  a.vfunc1();//静态绑定
+  ```
+  - 子类强制类型转换,用对象调用虚函数,不是指针。因此调用的还是`A::vfunc1()`
+  ---
+  ```cpp
+  A* pa = new B;
+  pa -> vfunc1();
+
+  pa = &b;
+  pa -> vfunc1();
+  ```
+- 符合动态绑定的三个特征：指针指向，向上转型，虚函数
+# P20,21,22. 关于new,delete及其重载
+- 可以对new 和delete 进行全局重载  `::operator new`,`::operator delete`,`::operator new[]`,`::operator delete[]` 注意影响所有函数
+- 也可以仅重载member operator new/delete new\[]/delete[]
+- 接管 `new`和`delete`的目的是为了实现内存池
+- 以下写法强制采取全局的new和delete ,忽略内部的重载。
+```cpp
+Foo* pf = ::new Foo;
+::delete pf;
+```
+
+# P23,24.重载new(),delete()
+- 可以重载`class member operator new()` 写出多个版本，但前提是每个版本都要声明独特的参数，其中第一个参数必须是`size_t`类型,其余参数以new所指定的所指定的`placement arguments`为初值，出现于`new(···)`, 例如`Foo* pf= new(300,'c')Foo;`
+- 同样的也可以重载`delete` 但是`delete`只有在对应的 `operator new`的构造函数失败时才调用。
+```cpp
+Rep* p = new(extra)Rep;
+```
+标准库字符串重载了placement new，申请大于字符串长度的空间
+|        |< -  extra   ->|     
+---------|---------------|
+ Rep     |   string 内容 |
+前面的Rep用于引用计数
