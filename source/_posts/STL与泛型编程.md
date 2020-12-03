@@ -137,8 +137,10 @@ void test_array()
 ```
 
 # P4.容器之分类与各种测试(二)
+## 使用容器vector
 - 使用.push_back()从后端放入数据
 - vector 空间总是2倍增长，如放入入5个元素时，vector会先拓展成8个，再放入第五个。因此容量总是≥元素个数
+- 当空间装不下要容纳的数据的时会自动拓展，并将原来的数据拷贝到新的空间，然后释放旧的空间
 - vector.size() - 元素个数， vector.capacity() - 容量
 - `12-19行`使用`try-catch`因为可能内存分配失败。
 - `31-40行`使用`::find()`直接遍历查找；`43-53行`使用sort先排序再二分查找
@@ -203,3 +205,20 @@ void test_vector(long& totalCount)
 ```
 
 # P5.容器之分类与各种测试(三)
+## 使用容器 list
+- list有最大容量，可以调用`list.max_size()`得到（不同的电脑不同）
+- list自带成员函数sort()（class内自带的`sort`通常比全局的`sort`效率高）
+- 具体测试程序与vector类似
+
+## 使用容器 forward_list
+- forward_list 只允许前端放入 .push_front(),查看前端 forward_list.front()
+- 不提供查询大小和末位数据。(没有forward_list.back(), forward_list.size())
+- forward_list含有sort()
+- gnu中还有 `slist` 用法与其相同(gnu 很早之前在拓展库中加入slist，C++11才加入forward_list)
+
+## 使用容器 deque
+- deque 可以向两边扩充，但是在底层是分段(buffer)连续的，通过操作符重载来判断是否到达 buffer 的边界并进入到下一个 buffer。
+- 每次扩充一个 buffer (不同于vector每次翻倍，list每次增加一个)
+- deque 没有sort函数，需要调用 `::sort()`
+- deque 可以双向进出
+- 容器 `stack` 和 `queue` 也是调用 `deque`实现的，因此也有人将`stack` 和 `queue` 成为 `Container Adapters` 容器适配器
