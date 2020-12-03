@@ -18,8 +18,8 @@ https://www.bilibili.com/video/av48068999?p=1&t=18
 **3.算法  （Algorithms）**
 **4.迭代器（Iterators）**
 **5.适配器（Adapters）**
-**5.仿函数（functors）**
-
+**6.仿函数（functors）**
+下面的代码片段展示了这六大部件
 ```cpp {.line-numbers}
 #include <vector>
 #include <algorithm>
@@ -31,8 +31,8 @@ using namespace std;
 int main()
 {
     int ia[6] = {27, 210, 12, 47, 109, 83};
-    vector<int, allocator<int>> vi(ia,ia+6);//vector-容器，allocator-分配器
-    cout<< counter_if(vi.begin(),vi.end(),//begin,end - 迭代器，counter_if-算法
+    vector<int, allocator<int>> vi(ia,ia+6); //vector-容器，allocator-分配器
+    cout<< counter_if(vi.begin(),vi.end(),   //begin,end - 迭代器，counter_if-算法
                         not1(bind2nd(less<int>,40)));//not1,bind2nd - 算法适配器，less - 仿函数
     return 0;
 }
@@ -135,3 +135,71 @@ void test_array()
         cout << "not found!" << endl;
 }
 ```
+
+# P4.容器之分类与各种测试(二)
+- 使用.push_back()从后端放入数据
+- vector 空间总是2倍增长，如放入入5个元素时，vector会先拓展成8个，再放入第五个。因此容量总是≥元素个数
+- vector.size() - 元素个数， vector.capacity() - 容量
+- `12-19行`使用`try-catch`因为可能内存分配失败。
+- `31-40行`使用`::find()`直接遍历查找；`43-53行`使用sort先排序再二分查找
+- 排序通常很耗时间，有时直接查找更快。
+```cpp {.line-numbers}
+namespace jj02
+{
+void test_vector(long& totalCount)
+{
+    cout << "\ntest_vector()......... \n";
+
+    vector<string> c;
+    char buf[10];
+    clock_t timeStart = clock();
+    for (long i = 0; i < totalCount; ++i) 
+    {
+        try {
+        snprintf(buf, 10, "%d", rand() % 65535);
+        c.push_back(string(buf));
+        } catch(std::exception& e) {
+
+        cout << "i=" << i << e.what() << endl;
+        // 曾经最高 i=58389486 then std::bad_alloc
+        abort();
+        }
+    }
+
+    cout << "milli-seconds:" << (clock() - timeStart) << endl;
+    cout << "vector.size()= " << c.size() << endl;
+    cout << "vector.front()= " << c.front() << endl;
+    cout << "vector.back()= " << c.back() << endl;
+    cout << "vector.data()= " << c.data() << endl;
+    cout << "vector.capacity()= " << c.capacity() << endl;
+
+    string target = get_a_target_string();
+    {
+    timeStart = clock();
+    auto pItem = ::find(c.begin(), c.end(), target);
+    cout << "::find(), mill-seconds: " << (clock()-timeStart) << endl;
+
+    if (pItem != c.end())
+        cout << "found, " << *pItem << endl;
+    else
+        cout << "not found! " << endl;
+    }	
+
+    {
+    timeStart = clock();
+    
+    sort(c.begin(), c.end());
+    
+    string* pItem = (string*)bsearch(&target, (c.data()), c.size(), sizeof(string), compareStrings);
+    cout << "sort()+bsearch(), milli-seconds: " << (clock() - timeStart) << endl;
+    
+    if (pItem != NULL)
+        cout << "found, " << *pItem << endl;
+    else
+        cout << "not found!" << endl;
+    }
+}
+}
+```
+
+# P5.容器之分类与各种测试(三)
