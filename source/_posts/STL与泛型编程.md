@@ -39,7 +39,7 @@ int main()
 ```
 - 11行：用数组数据创建容器
 - 12行：输出数组中所有符合条件的数
-- 13行：`bind2nd(less<int>,40)` 意思是`return (num_in < 40)`将小于号的第二参数绑定为20，加上之前的`not1`去反，意为统计所有大于40的数。
+- 13行：`bind2nd(less<int>,40)` 意思是`return (num_in < 40)`将小于号的第二参数绑定为20，加上之前的`not1`取反，意为统计所有大于40的数。
 ---
 - `复杂度，Complexity，Big-oh` :不同的算法，不同的数据结构有不同的复杂度，要根据实际情况选择
 - 前闭后开区间：容器都是前闭后开区间，`vector.end()`不是容器内的元素，是最后一个的下一个，不能进行`*(c.end())`操作。
@@ -79,4 +79,59 @@ int main()
         elem *= 3; //传引用 pass by reference 修改容器内部值
     }  
     ```
+# P3.容器之分类与各种测试（一）
+- Sequence Containers - 序列式容器 : **Array** (fixed number), Vector，Deque，List，**Forward-List**
+    - array是把语言的数组包装成class
+    - List双向链表:内部有向前、向后两根指针；Forward-List单项链表:内部只有一个指针。单向链表占用空间更少
+- Associative Containers - 关联式容器：Set/MultiSet，Map/MultiMap，
+    - 内部是用红黑树实现，自平衡，避免某一侧过长
+    - set 只有value，map有key和value
+    - MultiMap 和 MultiSet 里面内容可以重复
+- **Unordered Containers** - 不定序容器(底层是HashTable)：Unordered Set/MultiSet，Unordered Map/MultiMap
+    - hashtable 常见做法 Separate Chaining，里面放链表
+- (加粗的是C++11新增特性)，
+## 测试 Array
+1. 创建一个长度为`ASIZE`的数组，随机放入0-65535之间数值，输出所需时间，数组大小，首尾数据，和数据地址。对应`3 ~ 14 行`
+2. 输入一个想要查找的数。查找前先对数组做快速排序(qsort),再输出上一步输出的那些信息。对应`16 ~ 28 行`
+3. 对排序好的数组进行二分查找，输出消耗时间和结果。对应`30-37行`
+
+```cpp {.line-numbers}
+void test_array()
+{
+    cout << "\ntest_array()......... \n";
+    array<long, ASIZE> c;//const long ASIZE = 1000000;
+    clock_t timeStart = clock();
+    for (long i = 0; i < ASIZE; ++i) {
+        c[i] = rand() % 65535;
+    }
+
+    cout << "milli-seconds:" << (clock() - timeStart) << endl;
+    cout << "array.size()= " << c.size() << endl;
+    cout << "array.front()= " << c.front() << endl;
+    cout << "array.back()= " << c.back() << endl;
+    cout << "array.data()= " << c.data() << endl;
+
+    long target = get_a_target_long();//输入一个数
+    timeStart = clock();
+    cout << "-------------------before qsort: --------------" << endl;
+
+    qsort(c.data(), ASIZE, sizeof(long), compareLongs);
     
+    cout << "qsort(), milli-seconds: " << (clock() - timeStart) << endl;
+    cout << "---------------------after qsort:------------------ " << endl;
+
+    cout << "array.size()= " << c.size() << endl;
+    cout << "array.front()= " << c.front() << endl;
+    cout << "array.back()= " << c.back() << endl;
+    cout << "array.data()= " << c.data() << endl;
+
+    timeStart = clock();
+    long* pItem = (long*)bsearch(&target, (c.data()), ASIZE, sizeof(long), compareLongs);
+    cout << "bsearch(), milli-seconds: " << (clock() - timeStart) << endl;
+    
+    if (pItem != NULL)
+        cout << "found, " << *pItem << endl;
+    else
+        cout << "not found!" << endl;
+}
+```
