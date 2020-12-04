@@ -84,22 +84,14 @@ $ git remote add origin https://github.com/lclee0577/lclee0577.github.io.git
 异地管理只需克隆hexo分支再编辑即可。
 
 ## 插入markdown目录
- - npm install hexo-toc --save
- - 配置文件_config.yml:
- - ```json
-      toc:
-        maxdepth: 3
-        class: toc
-        slugify: transliteration
-        decodeEntities: false
-        anchor:
-          position: after
-          symbol: '#'
-          style: header-anchor
-      ```
-
-- 使用`<!-- toc -->` 将自动生成目录
-- 文章最上面与标题一起处添加 `toc: true `
+- 无需安装hexo-toc 使用next主题会根据不同级别的标题自动生成目录
+- 在`next\_config.yml`中设置`toc` 的 `enable` 和 `number`即可
+  ```yml
+  toc:
+    enable: true
+    # Automatically add list number to toc.
+    number: false
+  ```
 
 ## 插入Latex
 
