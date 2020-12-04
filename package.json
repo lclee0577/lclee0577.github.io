@@ -3,13 +3,12 @@
   "version": "0.0.0",
   "private": false,
   "scripts": {
-    "buildAndServer":"hexo s -g",
-    "buildAndDeploy":"hexo d -g",
+    "buildAndServer": "hexo s -g",
+    "buildAndDeploy": "hexo d -g",
     "build": "hexo generate",
     "clean": "hexo clean",
     "deploy": "hexo deploy",
     "server": "hexo server"
-
   },
   "hexo": {
     "version": "5.2.0"
@@ -26,7 +25,6 @@
     "hexo-renderer-kramed": "^0.1.4",
     "hexo-renderer-mathjax": "^0.6.0",
     "hexo-renderer-stylus": "^2.0.1",
-    "hexo-server": "^2.0.0",
-    "hexo-toc": "^1.1.0"
+    "hexo-server": "^2.0.0"
   }
 }
