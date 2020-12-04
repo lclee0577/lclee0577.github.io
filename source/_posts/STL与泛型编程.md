@@ -222,3 +222,28 @@ void test_vector(long& totalCount)
 - deque 没有sort函数，需要调用 `::sort()`
 - deque 可以双向进出
 - 容器 `stack` 和 `queue` 也是调用 `deque`实现的，因此也有人将`stack` 和 `queue` 成为 `Container Adapters` 容器适配器
+- `stack` 先进后出 和 `queue` 先进先出 的特性，因此不提供 `iterator`，也无法查找和排序。
+# P6.容器之分类与各种测试(四)
+## 使用容器 multiSet
+- 调用 `insert()`放入数据，红黑树会找到其合适的位置。
+- 数据在放入的时候已经做好排序,插入的时候慢一些
+- 类内部的find()函数远远快于全局的::find()
+
+## 使用容器multiMap
+- `multimap<long,string> c;` 初始化 key 和 value 的类型
+- `c.insert(pair<long,string>(i,buf))`, 要插入`pair`类型数据
+- multimap 不可使用[] 做 insertion
+
+## 使用容器 unordered_multimap
+- 在以前的`gnu c`中提供的名称叫做`hash_multimap`（底层由散列表实现）
+- bucket 一定比 element 多。一旦元素数量达到 bucket 数量时，就会重新申请大一倍的空间，将元素重新打散，放到篮子里
+- 不一定每一个bucket里都有元素，有的bucket有多个，有的为空。（但是 bucket 中存放的链不能太长）
+
+## 使用容器set，map
+- 底层由红黑树实现
+- 放入key不能重复
+- 对set来说，key和value相同
+- map 可以使用 `c\[i] = string(buf)` 进行插入，内部会讲`i，buf`组成一个 pair 类型数据
+
+## 同样还有 unordered_set 和 unordered_map
+- 底层由hash table实现，特性与set和map相同
