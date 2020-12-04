@@ -20,12 +20,12 @@
     var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="FFT入门 预备知识 代码实操 心电信号处理 数据库简介 Wrist PPG During Exercise ECG信号处理        FFT入门#预备知识# 信号 $s&#x3D;A\cos(\omega t + \phi)$，其中$A$为信号的幅值，$\phi$为信号的相位。傅里叶变换就是要找到  $\omega$ ~$A$， 以及$\omega$ ~$\phi$  的关系。（一般我们处理数">
+  <meta name="description" content="FFT入门预备知识 信号 $s&#x3D;A\cos(\omega t + \phi)$，其中$A$为信号的幅值，$\phi$为信号的相位。傅里叶变换就是要找到  $\omega$ ~$A$， 以及$\omega$ ~$\phi$  的关系。（一般我们处理数据大多使用$\omega$ ~$A$的关系）。 所有的信号都可以由若干个不同幅值、相位、频率的余弦信号叠加而成即$s&#x3D;A_1\cos(\omega_1">
 <meta property="og:type" content="article">
 <meta property="og:title" content="FFT-guide">
 <meta property="og:url" content="http://yoursite.com/2020/07/30/FFT-guide/index.html">
 <meta property="og:site_name" content="Blog-lclee">
-<meta property="og:description" content="FFT入门 预备知识 代码实操 心电信号处理 数据库简介 Wrist PPG During Exercise ECG信号处理        FFT入门#预备知识# 信号 $s&#x3D;A\cos(\omega t + \phi)$，其中$A$为信号的幅值，$\phi$为信号的相位。傅里叶变换就是要找到  $\omega$ ~$A$， 以及$\omega$ ~$\phi$  的关系。（一般我们处理数">
+<meta property="og:description" content="FFT入门预备知识 信号 $s&#x3D;A\cos(\omega t + \phi)$，其中$A$为信号的幅值，$\phi$为信号的相位。傅里叶变换就是要找到  $\omega$ ~$A$， 以及$\omega$ ~$\phi$  的关系。（一般我们处理数据大多使用$\omega$ ~$A$的关系）。 所有的信号都可以由若干个不同幅值、相位、频率的余弦信号叠加而成即$s&#x3D;A_1\cos(\omega_1">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://yoursite.com/2020/07/30/FFT-guide/时域频域图.jpeg">
 <meta property="og:image" content="http://yoursite.com/2020/07/30/FFT-guide/正弦逼近方波.gif">
@@ -224,24 +224,8 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <div class="toc">
-
-<!-- toc -->
-<ul>
-<li><a href="#fft-ru-men">FFT入门</a><ul>
-<li><a href="#yu-bei-zhi-shi">预备知识</a></li>
-<li><a href="#dai-ma-shi-cao">代码实操</a></li>
-<li><a href="#xin-dian-xin-hao-chu-li">心电信号处理</a><ul>
-<li><a href="#shu-ju-ku-jian-jie-wrist-ppg-during-exercise">数据库简介 Wrist PPG During Exercise</a></li>
-<li><a href="#ecg-xin-hao-chu-li">ECG信号处理</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<!-- tocstop -->
-<p></div></p>
-<h1><span id="fft-ru-men">FFT入门</span><a href="#fft-ru-men" class="header-anchor">#</a></h1><h2><span id="yu-bei-zhi-shi">预备知识</span><a href="#yu-bei-zhi-shi" class="header-anchor">#</a></h2><ol>
+        <!-- toc -->
+<h1 id="FFT入门"><a href="#FFT入门" class="headerlink" title="FFT入门"></a>FFT入门</h1><h2 id="预备知识"><a href="#预备知识" class="headerlink" title="预备知识"></a>预备知识</h2><ol>
 <li>信号 $s=A\cos(\omega t + \phi)$，其中$A$为信号的幅值，$\phi$为信号的相位。傅里叶变换就是要找到  $\omega$ ~$A$， 以及$\omega$ ~$\phi$  的关系。（一般我们处理数据大多使用$\omega$ ~$A$的关系）。<img src="/2020/07/30/FFT-guide/时域频域图.jpeg" alt="时域频域图"></li>
 <li><p>所有的信号都可以由若干个不同幅值、相位、频率的余弦信号叠加而成即$s=A_1\cos(\omega_1+\phi_1)+A_2\cos(\omega_2+\phi_2)+A_3\cos(\omega_3+\phi_3)+…$   如下图多个频率的余弦逼近门函数<br><img src="/2020/07/30/FFT-guide/正弦逼近方波.gif" alt="逼近方波"></p>
 </li>
@@ -258,7 +242,7 @@
 </li>
 <li>由于实际处理的信号都是一个个离散的数值，我们对这些信号的处理称之为离散傅里叶变换DTF，在利用傅里叶变换的对称性优化后得到快速傅里叶变换即我们常用的FFT。(记住我们处理的是离散的数值序列就行。)</li>
 </ol>
-<h2><span id="dai-ma-shi-cao">代码实操</span><a href="#dai-ma-shi-cao" class="header-anchor">#</a></h2><p>这里用到的两个库: </p>
+<h2 id="代码实操"><a href="#代码实操" class="headerlink" title="代码实操"></a>代码实操</h2><p>这里用到的两个库: </p>
 <ul>
 <li><code>numpy</code> 包含常用的数学函数，我们要用的就是与fft相关的函数。</li>
 <li><code>matplotlib</code> 常用的画图库，语法与<code>MATLAB</code>类似。</li>
@@ -276,7 +260,7 @@
 <li>绘制频谱发现30Hz处的尖峰已经滤除<br><img src="/2020/07/30/FFT-guide/filter_freq.png" alt="filter_freq"></li>
 <li>由于我们刚刚处理的是平移过的频谱，因此在傅里叶逆变换还原信号前需要使用<code>np.fft.fftshift(F_disp)</code>进行频谱平移，再使用<code>np.fft.ifft()</code>还原信号<br><img src="/2020/07/30/FFT-guide/filter_sig.png" alt="filter_sig"><ul>
 <li>滤除高频噪声后就能得到我们想要的低频信号。<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">freq_band_filter = np.logical_or(freq&lt;-<span class="number">5</span>, freq&gt;<span class="number">5</span>)</span><br><span class="line">F_disp[freq_band_filter] = <span class="number">0</span></span><br><span class="line">plt.plot(freq[freq_band], (<span class="number">2</span>*np.<span class="built_in">abs</span>( F_disp[freq_band])/n)) </span><br><span class="line">filter_sig = np.fft.ifft(np.fft.fftshift(F_disp))</span><br><span class="line">plt.plot(t,filter_sig)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
-<h2><span id="xin-dian-xin-hao-chu-li">心电信号处理</span><a href="#xin-dian-xin-hao-chu-li" class="header-anchor">#</a></h2><h3><span id="shu-ju-ku-jian-jie-wrist-ppg-during-exercise">数据库简介 Wrist PPG During Exercise</span><a href="#shu-ju-ku-jian-jie-wrist-ppg-during-exercise" class="header-anchor">#</a></h3></li>
+<h2 id="心电信号处理"><a href="#心电信号处理" class="headerlink" title="心电信号处理"></a>心电信号处理</h2><h3 id="数据库简介-Wrist-PPG-During-Exercise"><a href="#数据库简介-Wrist-PPG-During-Exercise" class="headerlink" title="数据库简介 Wrist PPG During Exercise"></a>数据库简介 Wrist PPG During Exercise</h3></li>
 </ul>
 </li>
 </ul>
@@ -284,7 +268,7 @@
 <p><a target="_blank" rel="noopener" href="https://physionet.org/content/wrist/1.0.0/">心率数据 https://physionet.org/content/wrist/1.0.0/</a></p>
 <p>Delaram Jarchi and Alexander J. Casson. Description of a Database Containing Wrist PPG Signals Recorded during Physical Exercise with Both Accelerometer and Gyroscope Measures of Motion. Data 2017, 2(1), 1; doi:10.3390/data2010001</p>
 <p>Goldberger, A., Amaral, L., Glass, L., Hausdorff, J., Ivanov, P. C., Mark, R., … &amp; Stanley, H. E. (2000). PhysioBank, PhysioToolkit, and PhysioNet: Components of a new research resource for complex physiologic signals. Circulation [Online]. 101 (23), pp. e215–e220.</p>
-<h3><span id="ecg-xin-hao-chu-li">ECG信号处理</span><a href="#ecg-xin-hao-chu-li" class="header-anchor">#</a></h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"><span class="keyword">import</span> wfdb</span><br></pre></td></tr></table></figure>
+<h3 id="ECG信号处理"><a href="#ECG信号处理" class="headerlink" title="ECG信号处理"></a>ECG信号处理</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"><span class="keyword">import</span> wfdb</span><br></pre></td></tr></table></figure>
 <p>心率数据数据都是使用 <code>WFDB</code> 格式保存的,这里我们需要加载wfdb的库。</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">path = <span class="string">&quot;.\PPG\s2_walk&quot;</span></span><br><span class="line">sampFrom = <span class="number">0</span></span><br><span class="line">sampLen = <span class="number">4000</span></span><br><span class="line">sampTo = sampFrom+sampLen</span><br><span class="line"></span><br><span class="line">record = wfdb.rdrecord(path, channels=[<span class="number">0</span>,<span class="number">1</span>],sampfrom=sampFrom, sampto=sampTo)</span><br><span class="line">annotation = wfdb.rdann(path, <span class="string">&quot;atr&quot;</span>, sampfrom=sampFrom, sampto=sampTo)</span><br><span class="line">wfdb.plot_wfdb(record=record,annotation=annotation,title=<span class="string">&quot;ecg&quot;</span>,time_units=<span class="string">&quot;seconds&quot;</span>)</span><br><span class="line">print(<span class="string">&quot;anno aver heart rate:&quot;</span>,<span class="built_in">len</span>(annotation.sample)*Fs/sampLen*<span class="number">60</span>)</span><br></pre></td></tr></table></figure>
 <p>可以得到以下图形，上半部分为ECG数据，R峰处用红点标记（红点使用数据库自带的标记标出的）。下半部分图是同一时刻对应点PPG数据 。<br><img src="/2020/07/30/FFT-guide/心率原始数据绘制.png" alt="wfdb_plot"></p>
@@ -373,7 +357,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">FFT入门</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link"><span class="nav-number">1.1.</span> <span class="nav-text">预备知识</span></a></li><li class="nav-item nav-level-2"><a class="nav-link"><span class="nav-number">1.2.</span> <span class="nav-text">代码实操</span></a></li><li class="nav-item nav-level-2"><a class="nav-link"><span class="nav-number">1.3.</span> <span class="nav-text">心电信号处理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link"><span class="nav-number">1.3.1.</span> <span class="nav-text">数据库简介 Wrist PPG During Exercise</span></a></li><li class="nav-item nav-level-3"><a class="nav-link"><span class="nav-number">1.3.2.</span> <span class="nav-text">ECG信号处理</span></a></li></ol></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#FFT%E5%85%A5%E9%97%A8"><span class="nav-text">FFT入门</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86"><span class="nav-text">预备知识</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E5%AE%9E%E6%93%8D"><span class="nav-text">代码实操</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BF%83%E7%94%B5%E4%BF%A1%E5%8F%B7%E5%A4%84%E7%90%86"><span class="nav-text">心电信号处理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E7%AE%80%E4%BB%8B-Wrist-PPG-During-Exercise"><span class="nav-text">数据库简介 Wrist PPG During Exercise</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ECG%E4%BF%A1%E5%8F%B7%E5%A4%84%E7%90%86"><span class="nav-text">ECG信号处理</span></a></li></ol></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
