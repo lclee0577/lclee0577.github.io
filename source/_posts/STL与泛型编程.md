@@ -294,4 +294,137 @@ template<typename _Tp, typename _Alloc = std::allocator<_Tp>>
 
 # P9.OOP(面向对象编程) vs. GP(泛型编程)
 
-- **OOP** 企图将 `datas` 和 `methods` 关联在一起，**GP** 却是
+- **OOP** 企图将 `datas` 和 `methods` 关联在一起，例如 `list.sort()`
+
+- **GP** 却是将 `datas` 与 `methods` 分开来,  `sort(vec.begin(), vec.end())` 而不是 `vector.sort()`
+
+  - 采用 GP 的优点： `Containers` 和 `Algorithms` 团队可以各自工作，通过 `Iterators` 沟通
+
+- 为什么 `list` 不能用 `::sort` ? 全局函数`::sort` 对迭代器的类型有一定的要求，如实现指针+长度的地址跳转，而链表是通过指针相连，在内存中的地址并不连续，无法满足使用 `::sort` 的条件因此需要使用class内部自带的 `sort()` 。
+
+- 所有 `Algorithms`，器内最终涉及元素本身的操作，无非就是比大小。
+
+# P10.技术基础：操作符重载 and 模板（泛化，全特化，偏特化）
+
+- 不是所有的操作符都能重载，需要重载之前最好先去查一下reference。（像一般的加减乘除大小，都是可以重载的，对于特殊的符号要去查）
+
+- 函数模板
+  
+  ```cpp
+  class stone
+  {
+      public:
+        stone(int w, int h, int we) : _w(w), _h(h), _weight(we) {}
+
+        bool operator<(const stone& rhs) const
+        { return _weight < rhs._weight; }
+
+      private:
+        int _w, _h, _weight; 
+  };
+
+  template <class T>
+  inline
+  const T& min(const T& a, const T& b)
+  { return b < a : b , a; }
+
+  stone r1(2,3,6), r2(3,3,9), r3；
+  r3 = min(r1, r2);
+  ```
+
+- 当调用 `min(r1, r2)` 时，编译器会对 `function template` 进行实参推导 ( argument deduction )，结果可知 `T` 的类型为 `stone`，于是调用 `stone::operator<()`
+
+- 空心的 `template<>` 就是模板特化，具体特化的例子详见C++笔记
+
+- 偏特化（部分特化）特化就是将`template<···>`尖括号中的参数指定，减少泛化的参数。（个数和范围的特化） 具体特化的例子详见C++笔记
+
+# P11.分配器
+
+- `operator new()` 底层都是调用 `malloc()` 来实现
+
+- `malloc()` 分配的内从往往比我们需要的多，还有一些对齐，管理的额外开销(当我们存入的元素很小时，开销可能比元素更占空间)
+
+- 分配器的底层都是调用 `operator new()`
+
+- vc6，gnu c2.9 bc++ 标准库中的 `allocator` 没有任何独特设计，就是调用 `malloc()， free（）`来分配和释放内存。
+
+- 分配器释放内存时，不仅仅要传递指针，还要传递大小，因此不适合我们去使用它，但是却有利于容器来使用（后面讲解）
+
+- 由于标准库中的 `allocator` 会带来巨大的额外开销，gnu c2.9中并没有采用它来实现容器，而是使用了自己定义的分配器 `alloc`
+
+- 由于容器中的元素大小都是一样的，因此不必为每一个元素都添加开销（也就是说不是每个元素都要去调用 `malloc` 申请内存），gnu c2.9 中的 `alloc` 向系统申请整块大内存，在分割成不同大小，给容器使用，来减小额外开销。（内部具体特性在内存管理课程讲解）
+
+- 处于某种原因在gnu c4.9中没有使用高效的alloc作为容器的默认分配器，但是我们仍然可以使用它，它被改名为`__pool_alloc`, 例如`vector<string,__gnu_cxx::__pool_alloc<string>> vec;`
+
+# P12.容器之间的实现关系与分类(1)
+
+- 简单回顾容器详见P3。
+- 在不同版本下容器的大小sizeof()不同
+
+# P13.深度搜索list (1) 上
+
+- `operator++()` 是 `prefix form` 前置型 例如 ++i， `operator++(int)` 是 `postfix form` 后置类型，例如i++
+
+- list's iterator gnu gcc 2.9版本
+
+    ```cpp {.line-numbers}
+    template<class T>
+    struct __list_node{
+        typedef void* void_pointer;
+        void_pointer prev;
+        void_pointer next;
+        T data;
+    };
+
+    template<class T, class Ref, class Ptr>
+    struct __list_iterator{
+        typedef __list_iterator<T, Ref, Ptr> self;
+        typedef bidirectional_iterator_tag iterator_category;//(1)
+        typedef T value_type;                                //(2)
+        typedef Ptr pointer;                                 //(3)
+        typedef Ref reference;                               //(4)
+        typedef __list_node<T>* link_type;
+        typedef ptrdiff_t difference_type;                   //(5)
+
+        link_type node;
+
+        reference operator*() const{return (*node).data;}
+        pointer operator->() const{return &(operator*());}
+        self& operator++() {node = (link_type)((*node).next); return *this;}
+        self operator++(int){self tmp = *this; ++*this, return tmp;}
+        ···
+    }
+    ```
+
+- 几乎所有的容器迭代器要进行(1)-(5)的 `typedef`
+
+- `25`行 `self temp = *this` *不是操作符重载，这里是变量声明，解释为构造函数的参数;以及后面的 `++*this`也不是，`*this`是重载操作符`operator++()`的参数
+
+- 前置++和后置++ 返回类型不同是因为要与 int 的操作保持一致。int 不允许 `(i++)++` 但可以 `++(++i)`
+
+- 重载 `operator*()` 是为了取出数据 `21`行
+
+# P14.深度搜索list (1) 下
+
+- 在 gcc4.9 中做了一些改进，如第`__list_iterator`行只需传入一个模板参数，__list_node 中的指针类型也不在时void，而是指向自己本身这种类型。
+
+```cpp
+    template<typename _Tp>
+    struct _List_iterator {
+        typedef _Tp* pointer;
+        typedef _Tp& reference;
+        ···
+    }
+
+    struct _List_node_base {
+        _List_node_base* _M_next;
+        _List_node_base* _M_prev;
+    }
+
+    struct _List_node:public _List_node_base
+    {
+        _Tp _M_data;
+    }
+```
+
+- 双向链表内部其实是环状的，由不能访问节点数据end()连接两头形成环状结构
