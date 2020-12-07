@@ -101,7 +101,7 @@ complex::operator += (const complex& r)
 }
 ```
 
-* **传递者**无需知道**接收者**是以 **reference** 的形式接收 (`20-26行`函数`__doapl()` return *this; 但是它的声明却是引用) 
+* **传递者**无需知道**接收者**是以 **reference** 的形式接收 (`20-26行`函数`__doapl()` return *this; 但是它的声明却是引用)
 * 操作符重载要考虑连续调用, 因此声明时, 返回类型不能是`void`, 如`c3 += c2 += c1;`
 
 ## operator overloading(操作符重载-2, 非成员函数) 无this
@@ -145,7 +145,7 @@ operator << (ostream& os, const complex& x)
 
 ## 回顾
 
-> 1. 数据一定放在private区, 
+> 1. 数据一定放在private区,
 > 2. 参数和返回值尽量以引用来传递(根据情况要不要加const)
 > 3. 不修改数据的函数要用 `const` 修饰
 > 4. 使用 `initialization list` 设置初值
@@ -568,7 +568,7 @@ namespace jj01
 
 # P10.specialization, 模板特化
 
-在模板类中指定某一个类型进行表述
+在模板类中指定某一个类型进行表述，特化版本 `template <>` 尖括号中由于已经指定类型就为空
 
 ```cpp {.line-numbers}
 template <class Key>
@@ -787,7 +787,7 @@ double imag(const double  im) {···}
 * 虚函数的虚指针vptr指向虚表vtbl，虚表里放着要调用的虚函数的地址
 * 当改写继承的虚函数就是修改了虚标里的函数指针，
 * 多态中 动态绑定：1.通过指针指向某类（某个子类）；2.指针向上转型；3.调用虚函数
-* 静态绑定: 调用函数直接跳转到某个地址 
+* 静态绑定: 调用函数直接跳转到某个地址
 * 动态绑定的C描述`(*p->vptr[n])(p)`
 
 # 关于this
@@ -819,9 +819,12 @@ main()
 * 虽然子类调用的是从父类继承的函数(`18`行)，但是其中的虚函数已经在子类改写过(`11`行),就会以动态绑定的方式执行子类重新定义过的虚函数
 
 # P18.关于Dynamic Binging(1)
+
 ## 谈谈 const
+
 * const 只能加在成员函数参数括号之后，函数体花括号之前，意为没有修改类成员
 * const obj 不能调用 non-const member function
+
 ```cpp
 const String str("hello world");
 str.print()
