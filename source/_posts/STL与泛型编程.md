@@ -428,3 +428,41 @@ template<typename _Tp, typename _Alloc = std::allocator<_Tp>>
 ```
 
 - 双向链表内部其实是环状的，由不能访问节点数据end()连接两头形成环状结构
+
+# P15.迭代器的设计原则和 Iterator Traits的作用与设计
+
+- 迭代器是沟通算法与容器的桥梁，Iterator 必须提供5种 `associated types`才能使算法正确工作，(就是P13标出那5种)
+
+- 如果传入的不是 iterator，而是一个 native pointer (可以理解为一个退化的迭代器)，因此需要插入一个中间层 `Iterator Traits` 利用偏特化来分离class iterator 和 non-class iterator，下面举例一个特性，其他的5个也是相同的操作。
+
+    ```cpp {.line-numbers}
+    template <class I>
+    struct iterator_traits{ //traits 是特征的意思
+        typedef typename I::value_type value_type
+    };
+
+    //两个 partial specialization
+    template <class T>
+    struct iterator_traits<T*>{
+        typedef T value_type;
+    };
+
+    template <class T>
+    struct iterator_traits<const T*>{
+        typedef T value_type; //注意是T而不是const T
+    }
+    ```
+
+  - 注意第14行是`T`而不是`const T`，原因是在算法中这些类型要用来声明变量，若为`const`就无法进行后续的处理
+
+- 于是当需要知道`I`的value type 时便可以向下放这么写,当I是`class iterator`时，调用上方`1-4`行；若是pointer to T，则调用`7-10`行；若是pointer to const T，则调用`12-15`行
+
+    ```cpp
+    template<typename I,···>
+    void algorithm(···){
+        typename iterator_traits<I>::value_type v1;
+    }
+    ```
+
+- 除了 iterator traits 还有其他各式各类的traits，如 type traits，char traits， allocator traits ···
+
