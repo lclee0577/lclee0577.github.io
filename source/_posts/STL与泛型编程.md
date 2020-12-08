@@ -498,6 +498,31 @@ iterator_traits<ite>::iterator_category
 
 - 上面最后行就是通过萃取机 `iterator_traits` 获取指针类型的5中特征。（P15中的指针类型萃取example）
 
-- 在G4.9中 vector的实现非常复杂，但是功能完全一致
+- 在G4.9中 vector的实现非常复杂，但是功能完全一致，多了很多类的继承和复合
 
+# P17. array，forward_list深度探索(1)
 
+## 容器array
+
+- 数组是C就已经提供的数据结构，将其封装成容器，是为了方便算法的调用。 
+
+```cpp
+//TR1  c++技术报告1，在c++98 和 C++11 之间的版本
+template<typename _Tp, std::size_t _Nm>
+struct array{
+    typedef _Tp         value_type;
+    typedef _Tp*        pointer;
+    typedef value_type* iterator;//是native pointer G2.9也是如此
+
+    value_type _M_instance[_Nm ? _Nm :1];
+
+    iterator begin(){ return iterator(& _M_instance[0]);}
+    iterator end(){ return iterator(& _M_instance[_Nm]);}
+}
+```
+
+- 与普通的数组一样 array没有ctor 和dtor.
+
+- G4.9版本的array有复杂的继承关系，但实质没变。之前介绍过双向链表list，forwa_list 不在多说。
+
+# P18.deque、queue 和 stack深度探索(上)
