@@ -361,7 +361,7 @@ template<typename _Tp, typename _Alloc = std::allocator<_Tp>>
 - 简单回顾容器详见P3。
 - 在不同版本下容器的大小sizeof()不同
 
-# P13.深度搜索list (1) 上
+# P13.深度探索list (1) 上
 
 - `operator++()` 是 `prefix form` 前置型 例如 ++i， `operator++(int)` 是 `postfix form` 后置类型，例如i++
 
@@ -404,7 +404,7 @@ template<typename _Tp, typename _Alloc = std::allocator<_Tp>>
 
 - 重载 `operator*()` 是为了取出数据 `21`行
 
-# P14.深度搜索list (1) 下
+# P14.深度探索list (1) 下
 
 - 在 gcc4.9 中做了一些改进，如第`__list_iterator`行只需传入一个模板参数，__list_node 中的指针类型也不在时void，而是指向自己本身这种类型。
 
@@ -433,7 +433,7 @@ template<typename _Tp, typename _Alloc = std::allocator<_Tp>>
 
 - 迭代器是沟通算法与容器的桥梁，Iterator 必须提供5种 `associated types`才能使算法正确工作，(就是P13标出那5种)
 
-- 如果传入的不是 iterator，而是一个 native pointer (可以理解为一个退化的迭代器)，因此需要插入一个中间层 `Iterator Traits` 利用偏特化来分离class iterator 和 non-class iterator，下面举例一个特性，其他的5个也是相同的操作。
+- 如果传入的不是 iterator，而是一个 native pointer (可以理解为一个退化的迭代器)，因此需要插入一个中间层 `Iterator Traits` 利用偏特化来分离class iterator 和 non-class iterator。
 
     ```cpp {.line-numbers}
     template <class I>
@@ -464,5 +464,40 @@ template<typename _Tp, typename _Alloc = std::allocator<_Tp>>
     }
     ```
 
+- 上面举例一个特性，其他的5个也是相同的操作。指针类型偏特化时，一般是随机读取型tag `typedef random_access_iterator_tag iterator_category`
+
 - 除了 iterator traits 还有其他各式各类的traits，如 type traits，char traits， allocator traits ···
+
+# P16.vector深度探索(1)
+
+- vector 的扩充不是原地扩充，而是申请一块更大的内存，再把原来的数据复制过去，实现扩充。
+
+- vector 由三个指针来维护，`start`， `finish`，`end_of_storage`。因此 `size` = `finish` - `start`， `capacity` = `end_of_storage` - `start`。
+
+- 当调用`push_back`时，若`finish`==`end_of_storage`，则调用`insert_aux()`插入辅助函数。`insert_aux()`会重新申请内存，拷贝原有数据，同时还要拷贝当前数据之后的数据。（`insert_aux()`还会被`insert()`函数调用，vector中间插入后扩充，还要复制插入点之后的元素），再释放原来的vector，重新调整`start`， `finish`，`end_of_storage`三根指针指向新的位置。
+
+## vector's iterator
+
+- 由于vector是连续内存空间，因此迭代器无需设计的一个`class`，使用一个指针即可。（上一章讲的链表在内存中不连续）
+
+```cpp {.line-numbers}
+//G2.9
+template<class T, class Alloc = alloc>
+class vector{
+public:
+    typedef T value_type;
+    typedef value_type* iterator;//T*
+···
+}
+
+vector<int> vec;
+···
+vector<int>::iterator ite = vec.begin();
+iterator_traits<ite>::iterator_category
+```
+
+- 上面最后行就是通过萃取机 `iterator_traits` 获取指针类型的5中特征。（P15中的指针类型萃取example）
+
+- 在G4.9中 vector的实现非常复杂，但是功能完全一致
+
 
