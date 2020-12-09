@@ -526,3 +526,46 @@ struct array{
 - G4.9版本的array有复杂的继承关系，但实质没变。之前介绍过双向链表list，forwa_list 不在多说。
 
 # P18.deque、queue 和 stack深度探索(上)
+
+- deque 表现为一个双向可拓展的结构，其实在底层使用vector保存各个缓冲区的信息（这个vector相当于一个控制中心），各个缓冲区在内存中其实是不连续的，通过vector中保存的信息实现不同缓冲区的切换，对用户来说就像是连续空间一样。
+
+- 比较优秀的一点是deque的insert()在插入时会判断插入位置离哪一端更近，从而减少移动元素带来的开销
+
+# P19.deque、queue 和 stack深度探索(下）
+
+- deque 模拟连续空间都是 deque iterators 的功劳。 iterator中有4个成员：`cur`-当前元素，`first`-缓冲区开始地址，`last`-缓冲区结尾地址，`node`-vector中的下一个节点
+
+```cpp
+difference_type operator-(const self& x) const
+{
+    return difference_type(buffer_size())*(node-x.node-1)+(cur-first)+(x.last-x.cur);
+}
+```
+
+- 计算两个元素像差的地址：像差缓冲区数量*缓冲区大小+起始buffer中元素数量+结束buffer中元素数量。
+
+- 后置自增/减会调用前置自增/减。
+
+- 当控制中心vector需要扩充时，原来的数据复制到新的中间位置，为两头留下增长余量。
+
+- queue 和 stack 内含了一个deque，减少了某些功能实现的
+
+- queue 和 stack 都可以选择list 和deque作为底层结构，默认deque。
+
+- queue 和 stack 不允许遍历，也不提供迭代器。
+
+- stack 可以选择 vector 作为底层，queue则不能。
+
+- queue 和 stack 都不能选择set或map做底层
+
+# P20.RB-tree深度探索
+
+- Red-Black tree(红黑树) 是高度平衡二分搜索树，排列规则有利于 search 和 insert，并且保持平衡，不会使任何一个节点太深。
+
+- 不应该使用 rb_tree 的 iterator 改变元素值（因为元素有严谨的排序），但是在变成层面并未禁止此事。这是为了后续的map考量，map 中允许修改元素的 data，只有元素的 key 才是不可修改的。
+
+- rb_tree 提供两种插入操作： `insert_unique()` 和 `insert_equal()`, 前者表示插入的key独一无二，后者表示插入的key可重复，
+
+- 红黑树中的 value 是包含 key 和 data 的整体。
+
+- G2.9 - G4.9 容器的实现都变得复杂，包含了多个类的继承与复合。虽然复杂不利于学习但是遵循了一个面向对象的原则 `handle and body` 桥接模式。抽象部分与实现部分分离。
