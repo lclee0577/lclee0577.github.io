@@ -569,3 +569,19 @@ difference_type operator-(const self& x) const
 - 红黑树中的 value 是包含 key 和 data 的整体。
 
 - G2.9 - G4.9 容器的实现都变得复杂，包含了多个类的继承与复合。虽然复杂不利于学习但是遵循了一个面向对象的原则 `handle and body` 桥接模式。抽象部分与实现部分分离。
+
+# P21.set multiset 深度探索
+
+- set/multiset 以 rb_tree 为底层结构，因此有元素自动排序的特性。set/multiset 元素的 value 和 key 合一；value 就是 key
+
+- set/multiset 提供遍历操作，按照正常规则 ++ite 遍历可以获得排序状态
+
+- set/multiset 无法通过 iterator 修改元素值（不同于rb_tree）
+
+- set 的 key 必须是独一无二的，底层调用的是红黑树的 `insert_unique()`; multiset 的key 可以重复，底层调用的是红黑树的 `insert_equal()`
+
+- set 内的 iterator 是 `const_iterator` 类型，防止用户通过迭代器修改set的内容。
+
+- set所有的操作都是调用底层的红黑树完成，从这个意义上看，set也能称之为 Container Adapter
+
+
