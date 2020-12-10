@@ -637,4 +637,38 @@ struct eqstr{
 
 ---
 
-# 
+# P27.算法的形式
+
+- 算法 - function template， 目的是为了处理容器的内容
+
+- 算法无法看到容器的所有内容，需要通过迭代器来进行访问。
+
+# P28.迭代器的分类
+
+- 五种 iterator category,表示迭代器的移动方式。除了output外，其他四个自下而上继承
+  - input_iterator_tag, output_iterator_tag
+  - forward_iterator_tag
+  - bidirectional_iterator_tag
+  - random_access_iterator_tag
+
+- input_iterator_tag, output_iterator_tag 对应 istream_iterator，ostream_iterator 后面的课程会深入讲解
+
+- 可以通过 `typeid(ite).name()` 来查看迭代器的类型，但是输出还会附加一些编译过程的其他信息，取决于编译器的实现。
+
+# P29.迭代器分类对算法的影响
+
+- 如需要求两个指针之间的距离，对于可随机访问的迭代器来说就是两个地址相减，若不是可随机访问的，则需要一直`++`使两个指针地址相同来计算距离。
+
+- 又例如前进`advance()`这个函数，若是可随机访问，则直接地址+偏移量，否则就要一个一个跳转
+
+- 迭代器种类的继承关系使得在不同函数重载时，便于确定是哪一种类型。（有的函数只有`random_access`和`input`类型的两种版本，那么forward和bidirectional也就会归为`input`这一类。
+
+- function template 没有所谓的特化，用的都是重载的手法。例如常用的copy，若是const char* 这种类型则调用 `memmove()`-(速度极快)，若是普通的迭代器，且构造函数不重要，那么也调用`memmove()`，否则就要一个一个创建。
+
+- 算法源码中对 `iterator_category`的暗示: 原则上算法可以接受任意类型的迭代器，但是算法参数的声明可能会暗示我们要输入的类型
+
+    ```cpp
+    template<class RandomAccessIterator> 
+    sort(RandomAccessIterator first,RandomAccessIterator last)
+    ```
+
