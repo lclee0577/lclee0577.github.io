@@ -672,3 +672,55 @@ struct eqstr{
     sort(RandomAccessIterator first,RandomAccessIterator last)
     ```
 
+# P30.算法源码剖析
+
+- 标准库中的算法前两个参数通常是容器的两个迭代器（指针-退化的迭代器）
+
+```cpp
+template<class InputIterator,class T>
+T accumulate(InputIterator first, InputIterator last, T init){
+    for(; first != last; ++first)
+        init = init + *first;//将元素值累加到 init 上
+    return init；
+}
+
+template<class InputIterator,class T,class BinaryOperation)
+T accumulate(InputIterator first, InputIterator last, T init, BinaryOperation binary_op)//binary_op 接受两个参数的函数
+    for(; first != last; ++first)
+        init = binary_op(init + *first);//将元素值累加到 init 上
+    return init；
+```
+
+- 以上是标准库的一个算法，第二个重载版本可以调用自定义的函数进行累计算操作。
+
+```cpp
+int myfunc(int x,int y){return x+2*y;}
+
+struct myclass{
+    int operator()(int x, int y){return x+3*y;}
+}myobj;//仿函数
+
+int init = 100;
+int num[] = {10,20,30};
+cout << accumulate(nums,nums+3,init);//160
+cout << accumulate(nums,nums+3,init,minus<int>());//40
+cout << accumulate(nums,nums+3,init,myfunc)；//220
+cout << accumulate(nums,nums+3,init,myobj);//280 
+```
+
+- binary_search 之前要验证是否已经排好序。
+
+```cpp
+template<class ForwardIterator, class T>
+bool binary_search(ForwardIterator first, ForwardIterator last, const T& val){
+    first = std::lower_bound(first, last, val);
+    return(first!=last && !(val<*first));
+}
+```
+
+- lower_bound 返回的是找到元素的最小的位置（里面可能有重复，找最大的位置为upper_bound）
+
+- 需要判断目标位置不是end，目标值也不小于首元素
+
+- 其实应该先判断不小于首元素在继续二分查找
+
