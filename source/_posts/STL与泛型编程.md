@@ -504,7 +504,7 @@ iterator_traits<ite>::iterator_category
 
 ## 容器array
 
-- 数组是C就已经提供的数据结构，将其封装成容器，是为了方便算法的调用。 
+- 数组是C就已经提供的数据结构，将其封装成容器，是为了方便算法的调用。
 
 ```cpp
 //TR1  c++技术报告1，在c++98 和 C++11 之间的版本
@@ -584,4 +584,57 @@ difference_type operator-(const self& x) const
 
 - set所有的操作都是调用底层的红黑树完成，从这个意义上看，set也能称之为 Container Adapter
 
+# P22.map,multimap 深度探索
 
+- map 底层也是由红黑树实现，`typedef pair<const Key, T> value_type` 来实现只允许改 data，不允许改 Key
+
+- map 独特的 `operator[](const key_type& __k)`, 与python中的字典相同，若key存在则返回data，若不存在则创建（multimap 不允许用[]）。
+
+# P23.hashtable 深度探索(上)
+
+- obj 通过`散列函数-hash function` 计算出`编号-hash code`，再对 hashtable 的长度求余数，放到 hashtable bucket中。若出现重复则使用链表串联。
+
+- `Separate Chaining` 虽然 list 是线性搜索空间，如果list足够小，搜索速度任然很快。
+
+- hashtable 的长度通常为质数，在gnu c中默认值一般为53.
+
+- 当 obj 个数大于hashtable的长度时，hashtable 将扩充到两倍容量相近的那个质数的大小，最接近 53*2 的质数为97（stl里有质数表，直接查表就即可），因此hashtable扩充到 97，在对所有元素重新打散 rehashing
+
+- 与 deque 一样，`hashtable`内部的控制中心是 vector 类型的 buckets， `iterator` 在进行 `++`的操作，指向链表的末位时，能回到控制中心，再指向下一个元素。
+
+# P23.hashtable 深度探索(下)
+
+```cpp
+hashtable<const char*,
+        const char*,
+        hash<const char*>,
+        identity<const char*>,
+        eqstr
+        alloc>
+ht(50,hash<const char*>(),eqstr());
+ht.insert_unique("kiwi");
+ht.insert_unique("plum")
+ht.insert_unique("apple")
+
+struct eqstr{
+    bool operator()(const char* s1,const char* s2) const { return strcmp(s1,s2)==0;}
+}
+```
+
+- 比较 `c-string` 是否相等可用`strcmp`，但返回值是`-1,0,1`，不是bool，需要重新包装。
+
+- 默认的类型都有特化版本的 hash 函数。对于自定义的类型要自己设计 hash-function（使hash足够乱，足够随机）。注意标准库没有提供 `hash<std::string>`
+
+# P25.这节课的视频跟之前重复了
+
+# P26.unordered 容器概念
+
+- 之前所有 hash 开头的数据结构在c++11中 都以 unordered_ 开头。
+
+- 可以调用 `.bucket_size(i)` 查看第 `i` 个 bucket 中的元素数量。
+
+到此为止第二讲容器的探讨全局完成
+
+---
+
+# 
