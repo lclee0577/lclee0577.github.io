@@ -97,7 +97,11 @@ git remote add origin https://github.com/lclee0577/lclee0577.github.io.git
 
 在 github 网页端 `Settings` - `Branches` -`Default branch` 中将默认分支设置为`hexo` 并点击`update`确认。
 
-异地管理只需克隆hexo分支再编辑即可。
+异地管理只需克隆hexo分支，安装开发依赖，再编辑即可。
+
+```bash
+npm install --devDependencies
+```
 
 ## 插入markdown目录
 

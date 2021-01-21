@@ -6,6 +6,7 @@ categories: C++
 toc: true
 ---
 
+<!-- markdownlint-disable MD025 -->
 # 资源
 
 <https://www.bilibili.com/video/av48068999?p=1&t=18>
@@ -504,7 +505,7 @@ iterator_traits<ite>::iterator_category
 
 ## 容器array
 
-- 数组是C就已经提供的数据结构，将其封装成容器，是为了方便算法的调用。 
+- 数组是C就已经提供的数据结构，将其封装成容器，是为了方便算法的调用。
 
 ```cpp
 //TR1  c++技术报告1，在c++98 和 C++11 之间的版本
@@ -584,4 +585,6 @@ difference_type operator-(const self& x) const
 
 - set所有的操作都是调用底层的红黑树完成，从这个意义上看，set也能称之为 Container Adapter
 
+# P22. 容器map，multimap
 
+- 以 rb_tree 为底层结构，自动排序。
