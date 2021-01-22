@@ -585,9 +585,143 @@ difference_type operator-(const self& x) const
 
 - set所有的操作都是调用底层的红黑树完成，从这个意义上看，set也能称之为 Container Adapter
 
-# P22. 容器map，multimap
+# P22.map,multimap 深度探索
 
-- 以 rb_tree 为底层结构，自动排序。
+- map 底层也是由红黑树实现，`typedef pair<const Key, T> value_type` 来实现只允许改 data，不允许改 Key
 
-- 可以修改 `data` 不能修改 `key` （ `const` 修饰） 。
+- map 独特的 `operator[](const key_type& __k)`, 与python中的字典相同，若key存在则返回data，若不存在则创建（multimap 不允许用[]）。
+
+# P23.hashtable 深度探索(上)
+
+- obj 通过`散列函数-hash function` 计算出`编号-hash code`，再对 hashtable 的长度求余数，放到 hashtable bucket中。若出现重复则使用链表串联。
+
+- `Separate Chaining` 虽然 list 是线性搜索空间，如果list足够小，搜索速度任然很快。
+
+- hashtable 的长度通常为质数，在gnu c中默认值一般为53.
+
+- 当 obj 个数大于hashtable的长度时，hashtable 将扩充到两倍容量相近的那个质数的大小，最接近 53*2 的质数为97（stl里有质数表，直接查表就即可），因此hashtable扩充到 97，在对所有元素重新打散 rehashing
+
+- 与 deque 一样，`hashtable`内部的控制中心是 vector 类型的 buckets， `iterator` 在进行 `++`的操作，指向链表的末位时，能回到控制中心，再指向下一个元素。
+
+# P23.hashtable 深度探索(下)
+
+```cpp
+hashtable<const char*,
+        const char*,
+        hash<const char*>,
+        identity<const char*>,
+        eqstr
+        alloc>
+ht(50,hash<const char*>(),eqstr());
+ht.insert_unique("kiwi");
+ht.insert_unique("plum")
+ht.insert_unique("apple")
+
+struct eqstr{
+    bool operator()(const char* s1,const char* s2) const { return strcmp(s1,s2)==0;}
+}
+```
+
+- 比较 `c-string` 是否相等可用`strcmp`，但返回值是`-1,0,1`，不是bool，需要重新包装。
+
+- 默认的类型都有特化版本的 hash 函数。对于自定义的类型要自己设计 hash-function（使hash足够乱，足够随机）。注意标准库没有提供 `hash<std::string>`
+
+# P25.这节课的视频跟之前重复了
+
+# P26.unordered 容器概念
+
+- 之前所有 hash 开头的数据结构在c++11中 都以 unordered_ 开头。
+
+- 可以调用 `.bucket_size(i)` 查看第 `i` 个 bucket 中的元素数量。
+
+到此为止第二讲容器的探讨全局完成
+
+---
+
+# P27.算法的形式
+
+- 算法 - function template， 目的是为了处理容器的内容
+
+- 算法无法看到容器的所有内容，需要通过迭代器来进行访问。
+
+# P28.迭代器的分类
+
+- 五种 iterator category,表示迭代器的移动方式。除了output外，其他四个自下而上继承
+  - input_iterator_tag, output_iterator_tag
+  - forward_iterator_tag
+  - bidirectional_iterator_tag
+  - random_access_iterator_tag
+
+- input_iterator_tag, output_iterator_tag 对应 istream_iterator，ostream_iterator 后面的课程会深入讲解
+
+- 可以通过 `typeid(ite).name()` 来查看迭代器的类型，但是输出还会附加一些编译过程的其他信息，取决于编译器的实现。
+
+# P29.迭代器分类对算法的影响
+
+- 如需要求两个指针之间的距离，对于可随机访问的迭代器来说就是两个地址相减，若不是可随机访问的，则需要一直`++`使两个指针地址相同来计算距离。
+
+- 又例如前进`advance()`这个函数，若是可随机访问，则直接地址+偏移量，否则就要一个一个跳转
+
+- 迭代器种类的继承关系使得在不同函数重载时，便于确定是哪一种类型。（有的函数只有`random_access`和`input`类型的两种版本，那么forward和bidirectional也就会归为`input`这一类。
+
+- function template 没有所谓的特化，用的都是重载的手法。例如常用的copy，若是const char* 这种类型则调用 `memmove()`-(速度极快)，若是普通的迭代器，且构造函数不重要，那么也调用`memmove()`，否则就要一个一个创建。
+
+- 算法源码中对 `iterator_category`的暗示: 原则上算法可以接受任意类型的迭代器，但是算法参数的声明可能会暗示我们要输入的类型
+
+    ```cpp
+    template<class RandomAccessIterator> 
+    sort(RandomAccessIterator first,RandomAccessIterator last)
+    ```
+
+# P30.算法源码剖析
+
+- 标准库中的算法前两个参数通常是容器的两个迭代器（指针-退化的迭代器）
+
+```cpp
+template<class InputIterator,class T>
+T accumulate(InputIterator first, InputIterator last, T init){
+    for(; first != last; ++first)
+        init = init + *first;//将元素值累加到 init 上
+    return init；
+}
+
+template<class InputIterator,class T,class BinaryOperation)
+T accumulate(InputIterator first, InputIterator last, T init, BinaryOperation binary_op)//binary_op 接受两个参数的函数
+    for(; first != last; ++first)
+        init = binary_op(init + *first);//将元素值累加到 init 上
+    return init；
+```
+
+- 以上是标准库的一个算法，第二个重载版本可以调用自定义的函数进行累计算操作。
+
+```cpp
+int myfunc(int x,int y){return x+2*y;}
+
+struct myclass{
+    int operator()(int x, int y){return x+3*y;}
+}myobj;//仿函数
+
+int init = 100;
+int num[] = {10,20,30};
+cout << accumulate(nums,nums+3,init);//160
+cout << accumulate(nums,nums+3,init,minus<int>());//40
+cout << accumulate(nums,nums+3,init,myfunc)；//220
+cout << accumulate(nums,nums+3,init,myobj);//280 
+```
+
+- binary_search 之前要验证是否已经排好序。
+
+```cpp
+template<class ForwardIterator, class T>
+bool binary_search(ForwardIterator first, ForwardIterator last, const T& val){
+    first = std::lower_bound(first, last, val);
+    return(first!=last && !(val<*first));
+}
+```
+
+- lower_bound 返回的是找到元素的最小的位置（里面可能有重复，找最大的位置为upper_bound）
+
+- 需要判断目标位置不是end，目标值也不小于首元素
+
+- 其实应该先判断不小于首元素在继续二分查找
 
