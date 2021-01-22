@@ -588,3 +588,6 @@ difference_type operator-(const self& x) const
 # P22. 容器map，multimap
 
 - 以 rb_tree 为底层结构，自动排序。
+
+- 可以修改 `data` 不能修改 `key` （ `const` 修饰） 。
+
