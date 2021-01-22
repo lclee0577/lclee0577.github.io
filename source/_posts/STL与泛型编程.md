@@ -724,3 +724,34 @@ bool binary_search(ForwardIterator first, ForwardIterator last, const T& val){
 
 - 其实应该先判断不小于首元素在继续二分查找
 
+# P31.仿函数和函数对象
+
+- functors 是在平时编程中最有可能需要自己编写的部分
+
+```cpp
+template <class T>
+struct plus:public binary_funcation<T,T,T>{
+    T operator()(const T& x,const T& y) const {return x + y;}
+}
+```
+
+- 因为需要把加减乘除等这些操作传给算法，因此需要将其变成函数。
+
+- 上一讲 struct 没有继承 因此无法融入到stl的体系中（当前的函数可以调用，但是标准库的其他函数不一定能调用，需要一些继承关系），我们自己写的仿函数往往没有继承。
+
+- STL规定每个 Adaptable Function 都应挑选适当的继承。(函数接受几个参数，以及参数种类)
+
+```cpp
+template <class Arg, class Result>
+struct unary_function{//一个参数
+    typedef Arg argument_type;
+    typedef Result result_type;
+};
+
+template <class Arg1,class Arg2, class Result>
+struct binary_function{//两个参数 
+    typedef Arg1 first_argument_type;
+    typedef Arg2 second_argument_type;
+    typedef Result result_type;
+};
+```
