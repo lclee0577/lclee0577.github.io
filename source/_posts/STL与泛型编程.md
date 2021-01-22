@@ -6,6 +6,7 @@ categories: C++
 toc: true
 ---
 
+<!-- markdownlint-disable MD025 -->
 # 资源
 
 <https://www.bilibili.com/video/av48068999?p=1&t=18>
