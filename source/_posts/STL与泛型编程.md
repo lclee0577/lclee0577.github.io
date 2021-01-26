@@ -40,7 +40,7 @@ int main()
 {
     int ia[6] = {27, 210, 12, 47, 109, 83};
     vector<int, allocator<int>> vi(ia,ia+6); //vector-容器，allocator-分配器
-    cout<< counter_if(vi.begin(),vi.end(),   //begin,end - 迭代器，counter_if-算法
+    cout<< count_if(vi.begin(),vi.end(),   //begin,end - 迭代器，count_if-算法
                         not1(bind2nd(less<int>(),40)));//not1,bind2nd - 算法适配器，less - 仿函数
     return 0;
 }
@@ -794,7 +794,7 @@ public:
 ```cpp
     int ia[6] = {27, 210, 12, 47, 109, 83};
     vector<int, allocator<int>> vi(ia,ia+6); //vector-容器，allocator-分配器
-    cout<< counter_if(vi.begin(),vi.end(),   //begin,end - 迭代器，counter_if-算法
+    cout<< count_if(vi.begin(),vi.end(),   //begin,end - 迭代器，count_if-算法
                         not1(bind2nd(less<int>(),40)));//not1,bind2nd - 算法适配器，less - 仿函数
 ```
 
@@ -837,14 +837,14 @@ class bind2nd: public unary_function<typename Operation::first_argument_type,typ
 
 - 在绑定第二参数后，仍有一个参数，应当继承 `unary_function`,以便还要被适配，以兼容STL体系
 
-- `bind2nd(less<int>(), 40))`生成一个仿函数对象，记录操作和实参。由于重载小括号可以在 `counter_if` 算法中调用
+- `bind2nd(less<int>(), 40))`生成一个仿函数对象，记录操作和实参。由于重载小括号可以在 `count_if` 算法中调用
 
 - 上式中 `less<int>()` 为创建对象的构造函数而非操作符重载
 
 ```cpp
  template <class InputIterator, class Predicate>
  typename iterator_traits<InputIterator>::difference_type
- counter_if(InputIterator first,InputIterator,last,Predicate pred){
+ count_if(InputIterator first,InputIterator,last,Predicate pred){
      typename iterator_traits<InputIterator>::difference_type n = 0;
      for(;first != last; ++first)
         if(pred(*first))//这里调用 重载小括号，绑定第二参数
@@ -878,4 +878,61 @@ class unary_negate: public unary_function<typename Predicate::argument_type,bool
 
 - 由于 `bind2nd` 继承 `unary_function`, `not1` 可以继续适配.
 
+# P35.新型适配器 bind c++11
+
+- std::bind 可绑定：
+
+    1. functions
+
+    2. function objects
+
+    3. member functions, _1必须是某个object地址(_1是占位符)
+
+    4. data members, _1必须是某个object地址
+
+```cpp
+//使用仿函数也是同理 std::divides<double> my_divide;
+double my_divide(double x,double y)
+    {return x/y ;}
+
+struct MyPair{
+    double a,b;
+    double multiply() { return a*b; }
+}
+
+using namespace std::placeholders;// adds visibility of _1, _2 
+
+//绑定函数
+auto fn_five = bind(my_divide,10,2); //返回10/5
+cout << fn_five() << '\n';           //5   
+
+auto fn_half = bind(my_divide, _1, 2); //返回x/2
+cout << fn_hale(10) << '\n';           //5
+
+auto fn_invert = bind(my_divide,_2,_1);//返回y/x
+cout << fn_invert(10,2)<<'\n';          //0.2
+
+auto fn_rounding = bind<int>(my_divide,_1,_2); //返回int(x/y)
+cout << fn_rounding(10,3)<<'\n';               //3
+
+//绑定成员
+MyPair ten_two {10,2}; // C++11 新加入的初始化方式
+
+//成员函数都含有隐藏的 this指针
+auto bound_menfn = bind(&MyPair::multiply,_1); //return x.multiply()
+cout << bound_menfn(ten_two) <<'\n';           //20
+
+auto bound_memdata = bind(&MyPair::a, ten_two); //return ten_two.a
+cout <<bound_memdata() <<'\n';                  //20
+
+auto bound_memdata2 = bind(&MyPair::a, _1);     //return x.a
+cout << bound_memdata2(ten_two) <<'\n';         //2
+
+// 重新实现两章的内容
+vector<int> v{15,37,94,50,73,58,28,98};
+cout << count_if(v.cbegin(),v.cend(),not1(bind2nd(less<int>(),50))) <<endl;//之前的用法仍旧兼容
+
+auto fn_= bind(less<int>(),_1,50)
+cout << count_if(v.cbegin(),v.cend(),fn_) << endl;
+```
 
