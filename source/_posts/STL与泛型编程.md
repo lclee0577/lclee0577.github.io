@@ -855,3 +855,27 @@ class bind2nd: public unary_function<typename Operation::first_argument_type,typ
 
 - 现在 `bind2nd`、`binder2nd` 已经过时，现在由 `bind` 取代。
 
+# P34. 函数适配器 not1
+
+```cpp
+//辅助函数，便于使用
+template <class Predicate>
+inline unary_nagete<Predicate> not1(const Predicate& pred){
+    return unary_negate<Predicate>(pred);//创建对象
+}
+
+template <class Predicate>
+class unary_negate: public unary_function<typename Predicate::argument_type,bool>{
+    protected:
+        Predicate pred;
+    public:
+        explicit unary_negate(const Predicate& x):pred(x){}//构造函数
+        bool operator()(const typename Predicate::argument_type& x) const{
+            return !pred(x);//结果取否
+        }
+}
+```
+
+- 由于 `bind2nd` 继承 `unary_function`, `not1` 可以继续适配.
+
+
