@@ -41,14 +41,14 @@ int main()
     int ia[6] = {27, 210, 12, 47, 109, 83};
     vector<int, allocator<int>> vi(ia,ia+6); //vector-容器，allocator-分配器
     cout<< counter_if(vi.begin(),vi.end(),   //begin,end - 迭代器，counter_if-算法
-                        not1(bind2nd(less<int>,40)));//not1,bind2nd - 算法适配器，less - 仿函数
+                        not1(bind2nd(less<int>(),40)));//not1,bind2nd - 算法适配器，less - 仿函数
     return 0;
 }
 ```
 
 - 11行：用数组数据创建容器
 - 12行：输出数组中所有符合条件的数
-- 13行：`bind2nd(less<int>,40)` 意思是`return (num_in < 40)`将小于号的第二参数绑定为20，加上之前的`not1`取反，意为统计所有大于40的数。
+- 13行：`bind2nd(less<int>(),40)` 意思是`return (num_in < 40)`将小于号的第二参数绑定为20，加上之前的`not1`取反，意为统计所有大于40的数。
 
 ---
 
@@ -740,7 +740,7 @@ struct plus:public binary_funcation<T,T,T>{
 
 - 上一讲 struct 没有继承 因此无法融入到stl的体系中（当前的函数可以调用，但是标准库的其他函数不一定能调用，需要一些继承关系），我们自己写的仿函数往往没有继承。
 
-- STL规定每个 Adaptable Function 都应挑选适当的继承。(函数接受几个参数，以及参数种类)
+- STL规定每个 Adaptable Function 都应挑选适当的继承。(函数接受几个参数，以及参数种类),这种继承没有带来额外的开销（占用数据空间），但是有利于适配。
 
 ```cpp
 template <class Arg, class Result>
@@ -756,3 +756,102 @@ struct binary_function{//两个参数
     typedef Result result_type;
 };
 ```
+
+- 仿函数就是重载小括号 `()`, 其实是一个对象，但是像是一个函数。
+
+# P32.存在多种Adapters
+
+- 对现有的函数或数据结构进行简单的修饰，如三个参数变为两个（在特定条件下固定一个参数），修改函数名称等等。
+
+- 有两种实现方式：继承 和 复合
+
+- 容器适配器 stack 和 queue 内含一个 deque，底层功能都是由 deque 实现。
+
+```cpp
+template <class T, class Sequence=deque<T>>//底层容器默认使用双向队列
+class stack{
+···
+public:
+    typedef typename Sequence::value_type value_type;
+    typedef typename Sequence::size_type size_type;
+    typedef typename Sequence::reference reference;
+    typedef typename Sequence::const_reference const_reference;
+protected:
+    Sequence c;//底层容器
+public:
+    bool empty() const {return c.empty();}
+    size_type size() const {return c.size();}
+    reference top() {return c.back();}
+    const_refernece top() const {return c.back();}
+    void push(const value_type& x){c.push_back(x);}
+    void pop(){c.pop_back();}
+
+}
+```
+  
+# P33.函数适配器：bind2nd
+
+```cpp
+    int ia[6] = {27, 210, 12, 47, 109, 83};
+    vector<int, allocator<int>> vi(ia,ia+6); //vector-容器，allocator-分配器
+    cout<< counter_if(vi.begin(),vi.end(),   //begin,end - 迭代器，counter_if-算法
+                        not1(bind2nd(less<int>(),40)));//not1,bind2nd - 算法适配器，less - 仿函数
+```
+
+- 找到vector中所有不小于40的数，现在来介绍 `bind2nd` 
+
+---
+
+- 辅助函数，让使用者可以更加方便使用 `binder2nd<Op>`,因为函数模板可以进行实参推到，编译器会自动推导出 `Op` 的类型。
+
+```cpp
+template<class Operation, class T>
+inline binder2nd<Operation> bind2nd(const Operation& op, const T& x){
+    typedef typename Operation::second_argument_type arg2_type;//从为声明对象的类中访问子对象类型 需要加 typename
+    return binder2nd<Operation>(op,arg2_type(x)); //类型（参数），构造函数 创建对象
+}
+
+```
+
+- 模板类，一般难以直接写出 `Operation` 的类型，因此采用辅助函数。
+
+```cpp
+template <class Operation>
+class bind2nd: public unary_function<typename Operation::first_argument_type,typename Operation::second_argument_type>{
+
+    protected:
+    Operation op;// 内部成员，记录函数和第二实参
+    typename Operation::second_argument_type value;
+
+    public:
+    //构造函数
+    binder2nd(const Operation& x,const typename Operation::second_argument_type& y)
+    :op(x),value(y){}//记录操作函数和实参
+
+    typename Operation::result_type //这个类中有很多这样的类型，是为了保持适配后的类型与源操作一致
+    operator()(const typename Operation::first_argument_type& x) const{
+        return op(x,value);//调用函数并固定第二实参
+    }
+}
+```
+
+- 在绑定第二参数后，仍有一个参数，应当继承 `unary_function`,以便还要被适配，以兼容STL体系
+
+- `bind2nd(less<int>(), 40))`生成一个仿函数对象，记录操作和实参。由于重载小括号可以在 `counter_if` 算法中调用
+
+- 上式中 `less<int>()` 为创建对象的构造函数而非操作符重载
+
+```cpp
+ template <class InputIterator, class Predicate>
+ typename iterator_traits<InputIterator>::difference_type
+ counter_if(InputIterator first,InputIterator,last,Predicate pred){
+     typename iterator_traits<InputIterator>::difference_type n = 0;
+     for(;first != last; ++first)
+        if(pred(*first))//这里调用 重载小括号，绑定第二参数
+            ++n;
+    return n;
+ }
+```
+
+- 现在 `bind2nd`、`binder2nd` 已经过时，现在由 `bind` 取代。
+
