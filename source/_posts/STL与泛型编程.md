@@ -936,3 +936,108 @@ auto fn_= bind(less<int>(),_1,50)
 cout << count_if(v.cbegin(),v.cend(),fn_) << endl;
 ```
 
+# P36.迭代器适配器 reverse_iterator
+
+- 逆向取迭代器
+
+```cpp
+template <class Iterator>
+class reverse_iterator{
+    protected:
+        Iterator current;
+    public:
+        //逆向迭代器5种相关的类型 与正向相对应
+        typedef typename iterator_traits<Iterator>::iterator_category iterator_category;
+        typedef typename iterator_traits<Iterator>::value_type value_type;
+        ···
+        typedef Iterator iterator_type;             //表示正向迭代器
+        typedef reverse_iterator<Iterator> self;    //表示逆向迭代器
+    public:
+        explicit reverse_iterator(iterator_type x):current(x){}
+                 reverse_iterator(const self& x):current(x.current){}
+        iterator_type base() const {return current;}//取出对应正向迭代器
+        reference operator*() const{Iterator tmp = current; return *--tmp;}//逆向迭代器退一位取值
+        pointer operator->()const {return &(operator*());}
+
+        //前进改后退，后退改前进
+        self& operator++() {--current;return *this;}
+        self& operator--() {++current;return *this;}
+        self operator+(difference_type n) const {return self(current - n)}
+        self operator-(difference_type n) const {return self(current + n)}
+        //头变尾 尾变头
+        reverse_iterator rbegin() { return reverse_iterator(end());}
+        reverse_iterator rend() { return reverse_iterator(begin());}
+}
+```
+
+# P37.迭代器适配器 inserter
+
+```cpp
+int myints[] = {10,20,30,40,50,60,70};
+vector<int> myvec(7);
+copy(myints,myints+7,myvec.begin());
+```
+
+- 首先看一段从数组拷贝到 `vector` 的程序，其中 `copy` 的主要代码如下所示
+
+```cpp
+template<class InputIterator,class OutputIterator>
+OutputIterator copy(InputIterator first, InputIterator last, OutputIterator result){
+    while(first!=last){
+        *result = *first;
+        ++result;++first;
+    }
+    return result
+}
+```
+
+- 可以看出是循环赋值，并没有检查边界。因此在 `vector` 中要留好足够的空间。
+
+- 下面是一段插入的程序片段
+
+```cpp
+list<int> foo, bar;
+for(int i =1, i <=5, i++)
+    {foo.push_back(i);bar.push_back(i*10);}
+// 初始化，foo 为1-5， bar 为10-50
+
+list<int>::iterator it foo.begin();
+advance(it,3) // list为不连续空间，使用advance 一个一个跳转
+
+copy(bar.begin(), bar.end(),inserter(foo,it))
+//1,2,3,10,20,30,40,50,4,5
+```
+
+- 在 `copy` 中是一个一个赋值动作，并没有重新申请空间。inserter 使用重载等号的方法实现在 `copy` 中扩容。
+
+- 在inserter 中 等号被重载为容器的插入操作,(容器默认提供了插入操作，会自动申请空间)
+
+```cpp
+template<class Container, class Iterator>
+inline inserter_iterator{
+    protected:
+        Container* container;
+        typename Container::iterator iter;
+    public:
+        inserter_iterator(Container& x, typename Container::iterator i)
+            :container(&x),iter(i){}
+        
+        inserter_iterator<Container>&
+        operator=(const typename Container::value_type& value){
+            iter = container->insert(iter,value);//这一步是关键，变移动为插入。这里的返回值指向新插入的元素
+            ++iter;//同时 iter 紧跟目标移动，指向下一个位置
+            return *this;
+        }
+}
+```
+
+- inserter_iterator 的辅助函数 实现类型推导
+
+```cpp
+template<class Container, class Iterator>
+inline inserter_iterator<Container>
+insert(Container& x, Iterator i){
+    typedef typename Container::iterator iter;
+    return inserter_iterator<Container>(x,iter(i))
+}
+```
