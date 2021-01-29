@@ -1041,3 +1041,48 @@ insert(Container& x, Iterator i){
     return inserter_iterator<Container>(x,iter(i))
 }
 ```
+
+# P38. X适配器 ostream_iterator
+
+```cpp
+vector<int> myvector;
+for(int i =1; i < 10; ++i) myvector.push_back(i*10);
+
+ostream_iterator<int> out_it(cout,",") //构造 类型为cout， 分隔符为，
+copy(myvector.begin(),myvector.end(),out_it);
+//打印出 10,20，30,40,50,60,70,80,90
+```
+
+- 通过操作符重载，在不改变 `copy` 程序(见上一章)的情况下，实现对输出的适配。
+
+- `copy` 中的赋值操作变成输出字符，迭代器自增不变
+
+```cpp
+template<class T, class charT = char, class traits = char_traits<chatT>>
+class ostream_iterator:
+public iterator<output_iterator_tag,void,void,void,void>
+{
+basic_ostream<chatT,traits>* out_stream;
+const chatT* delim;
+
+public:
+    typedef charT char_type;
+    typedef traits traits_type;
+    typedef basic_ostream<charT,traits> ostream_type;
+    ostream_iterator(ostream_type& s):out_stream(&s),delim(0){}
+    ostream_iterator(ostream_type& s, const charT* delimiter)
+        :out_stream(&s),delim(delimiter){}
+    ostream_iterator(const ostream_iterator<T,charT,traits>& x)
+        :out_stream(x.out_stream),delim(x.delim){}
+    ~ostream_iterator(){}
+
+    ostream_iterator<T,charT,traits>& operator=(const T& value){
+        *out_stream << value;          //重载等号为输出
+        if(delim != 0) *out_stream << delim;//若有分隔符，一起输出
+        return *this;
+    }
+    ostream_iterator<T,charT,traits>& operator*(){return *this}//对地址的操作全部返回自身
+    ostream_iterator<T,charT,traits>& operator++(){return *this}
+    ostream_iterator<T,charT,traits>& operator++(int){return *this}
+}
+```
