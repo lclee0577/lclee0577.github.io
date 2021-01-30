@@ -1138,4 +1138,99 @@ istream_iterator<int>iit(cin),eos;
 copy(iit,eos,inserter(c,c.begin()))
 ```
 
-- 使用 `copy` 将输入存储在vector中 
+- 使用 `copy` 将输入存储在vector中
+
+# P40.一个万用的 hash function
+
+- 计算一个自定义类型的hash（由常用的类型组成），假设 Custom 类 含有 `string fname,lname;long no;` 
+
+- 常见的类型标准库自带 hash function
+
+- 自定义hash function 有三种方法
+
+```cpp
+//方式一：创建可调用类型
+class CustomerHash
+{
+public:
+    std::size_t operator()(const Customer& c) const{
+        return ......
+    }
+};
+ 
+unordered_set<Customer, CustomerHash> custest;
+ 
+ 
+//方式二：创建哈希函数
+size_t customer_hash_func(const Customer& c){
+    return ......
+}
+ 
+unordered_set<Customer, size_t(*)(const Customer&)> custest(20, customer_hash_func); 
+//注意这里调用了构造函数的不同版本,size_t(*)(const Customer&) 是hash function 的类型
+ 
+ 
+//方式三：创建默认值hash<T>的特化版本
+namespace std
+{
+template<>
+struct hash<Customer>
+{
+    size_t
+    operator()(const Customer& c) const noexcept
+    { return ...... }
+};
+}
+ 
+unordered_set<Customer> custest;
+```
+
+- 一共有三种方法创建自定义hash function
+    1. 创建可调用类型
+    2. 创建哈希函数，但是创建对象时需要声明函数类型和函数地址，有一定难度
+    3. nordered_set 默认值`hash<T>`，我们只需创建自定义类型的`hash<T>`的特化版本即可
+
+- 标准库提供了 `hash_combine`(下面21行)，这个函数并没有什么数学推导，其中`0x9e3779b9`为黄金分割率。
+
+- 使用 variadic templates 变参模板（C++11），类似于递归每次计算第一个参数直到结束。
+
+- 用户调用第2行，实际调用的版本是滴9行，将参数逐个拆解计算，于第16行读取完所有参数终止计算。由于是传递引用，每次计算参数都在修改 `seed`，最后 `seed` 就是我们的哈希值。
+
+```cpp {.line-numbers}
+template <typename... Types>
+inline size_t hash_val(const Types&... args){        //提供给使用者的重载版本
+    size_t seed = 0;
+    hash_val(seed, args...);                         //实际调用的版本
+    return seed;
+}
+ 
+template <typename T, typename... Types>
+inline void hash_val(size_t& seed,                   //实际调用函数的主体
+                     const T& val, const Types&... args){
+    hash_combine(seed, val);
+    hash_val(seed, args...);
+}
+ 
+template <typename T>
+inline void hash_val(size_t& seed, const T& val){    //实际调用函数的边界条件
+    hash_combine(seed, val);
+}
+ 
+template <typename T>
+inline void hash_combine(size_t& seed, const T& val){
+    seed ^= std::hash<T>()(val) + 0x9e3779b9
+            + (seed<<6) + (seed>>2);
+}
+ 
+ 
+ 
+//下面是对于 class Customer 的实际使用
+class CustomerHash{
+public:
+    std::size_t operator()(const Customer& c) const{
+        return hash_val(c.fname, c.lname, c.no);
+    }
+};
+```
+
+- 
