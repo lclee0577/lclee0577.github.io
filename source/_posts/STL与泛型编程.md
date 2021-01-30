@@ -1053,7 +1053,7 @@ copy(myvector.begin(),myvector.end(),out_it);
 //打印出 10,20，30,40,50,60,70,80,90
 ```
 
-- 通过操作符重载，在不改变 `copy` 程序(见上一章)的情况下，实现对输出的适配。
+- 通过操作符重载，在不改变 `copy` 程序(见上一章)的情况下，实现对输出的适配(对硬件也就是屏幕输出的绑定)。
 
 - `copy` 中的赋值操作变成输出字符，迭代器自增不变
 
@@ -1086,3 +1086,56 @@ public:
     ostream_iterator<T,charT,traits>& operator++(int){return *this}
 }
 ```
+
+# P39. X适配器 i stream_iterator
+
+- 对输入的绑定，相当于绑定键盘
+
+```cpp
+double value1,value2;
+cout<< "please insert two values:";
+istream_iterator<double> eos;//end of stream_iterator, 没有参数作为结束标志位
+istream_iterator<double> iit(cin) //stdin iterator 创建迭代器时已经要求输入了，相当于cin>> value;详见下方的定义
+if(iit!=eos) value1 = *iit;//相当于return value
+
+++iit;//自增相当于读取下一个
+if(iit!=eos) value2 = *iit;
+```
+
+```cpp {.line-numbers}
+template<class T,class charT= char,class traits = char_traits<charT>,class Distance=ptrdiff_t>
+class istream_iterator
+    :public iterator<input_iterator_tag,T,Distance,const T*,const T&>
+{
+basic_istream<chatT,traits>* in_stream;
+T value;
+public:
+    typedef charT char_type;
+    typedef traits traits_type;
+    typedef basic_istream<charT,traits> istream_type;
+
+    istream_iterator():in_stream(0){}
+    istream_iterator(istream_iterator& s):in_stream(&s){++*this}//值得注意的是：一旦创建立即读取，见下面操作符重载 18行
+    istream_iterator(const istream_iterator<T,charT,traits,Distance>& x):in_stream(x.in_stream),value(x.value){}
+    ~istream_iterator(){}
+    const T& operator*() const {return value;}
+    const T& operator->() const {return &value;}
+    istream_iterator<T,charT,traits,Distance>& operator++(){
+        if(in_stream&&!(*in_stream>>value)) in_stream=0;
+        return *this;
+    }
+    istream_iterator<T,charT,traits,Distance>& operator++(int){//后++
+        istream_iterator<T,charT,traits,Distance> tmp = *this;
+        ++*this;
+        return tmp;
+    }
+}
+```
+
+```cpp
+istream_iterator<int>iit(cin),eos;
+
+copy(iit,eos,inserter(c,c.begin()))
+```
+
+- 使用 `copy` 将输入存储在vector中 
