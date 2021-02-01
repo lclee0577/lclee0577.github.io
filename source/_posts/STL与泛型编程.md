@@ -1157,18 +1157,14 @@ public:
         return ......
     }
 };
- 
 unordered_set<Customer, CustomerHash> custest;
- 
  
 //方式二：创建哈希函数
 size_t customer_hash_func(const Customer& c){
     return ......
 }
- 
 unordered_set<Customer, size_t(*)(const Customer&)> custest(20, customer_hash_func); 
 //注意这里调用了构造函数的不同版本,size_t(*)(const Customer&) 是hash function 的类型
- 
  
 //方式三：创建默认值hash<T>的特化版本
 namespace std
@@ -1181,7 +1177,6 @@ struct hash<Customer>
     { return ...... }
 };
 }
- 
 unordered_set<Customer> custest;
 ```
 
@@ -1222,8 +1217,6 @@ inline void hash_combine(size_t& seed, const T& val){
             + (seed<<6) + (seed>>2);
 }
  
- 
- 
 //下面是对于 class Customer 的实际使用
 class CustomerHash{
 public:
@@ -1233,4 +1226,123 @@ public:
 };
 ```
 
-- 
+# P41.tuple 用例
+
+- `tuple` 可以将任意多个类型作为一组作为一种新的类型来声明变量。不同于 `vector` 和 `list` 创建对象时要固定变量的类型  
+
+```cpp
+tuple<string,int,int,complex<double>> t;
+cout<< "sizeof =" << sizeof(t)<<endl; //32 不是28 4+4+4+(8+8)=28 应该要跟最大的元素对齐,所以应是16的倍数
+
+tuple<int,float,string>t1(41,6.3,"nico")
+cout << "t1: "<< get<0>(t1) <<" "<< get<1>(t1)<< " "<<get<2>(t1)<<endl;//分别取出元素
+
+auto t2 = make_tuple(22,44,"stacy");
+
+get<1>(t1) = get<1>(t2);//成员之间可以互相赋值
+
+if(t1<t2) //之间可以互相比较
+    cout<<"t1<t2"<<endl;
+else
+    cout<<"t1>=2"<<endl;
+
+t1 = t2;//可以互相赋值
+
+tuple<int,float string> t3(77,1.1,"more light")
+int i1;
+float f1;
+string s1;
+tie(i1,f1,s1) = t3; //批量赋值，t3 在之后的改动并不会影响前面三个变量
+
+typedef tuple<int,float,string> TupleType;
+cout << tuple_size<TupleType>::value << endl;// 3
+cout << tuple_element<1,TupleType>::type f1 = 1.0; //取出第第二个的类型来声明变量，也就是float f1=1.0
+```
+
+- 可以使用 `tuple` 和类型直接组合 创建元祖，也可以使用 `make_tuple` (内含类型推导)
+
+- 如同普通类型一样可以进行大小比较，赋值
+
+- 可以用 `get`获取元祖成员的数据,`tie`进行批量赋值，`tuple_size` 查询元祖成员数量，`tuple_element`
+
+```cpp {.line-numbers}
+template<typename... Values> class tuple;
+template<> class tuple<> {};
+ 
+template<typename Head, typename... Tail>
+class tuple<Head, Tail...> :private tuple<Tail...>
+{
+    typedef tuple<Tail...> inherited;
+public:
+    tuple() {}
+    tuple(Head v, Tail... vtail):m_Head(v), tuple<Tail...>(vtail...) {}
+ 
+    typename Head::type head() { return m_Head; }
+    inherited& tail() { return *this; }
+protected:
+    Head m_Head;
+};
+```
+
+- 递归继承，例如 `tuple<int,float,string>` 的继承顺序 `tuple<>` ← `tuple<string>` ← `tuple<float,string>`←`tuple<int,float,string>`，
+
+- 递归继承终止与第二行，一个空的元祖
+
+- 因此声明一个元祖，就可以将其分为头和尾，尾又可以再分成头尾，以此下去，直到最后一个元素的尾指是空的元祖。第 `10` 行 `tuple<Tail...>(vtail...)`重新调用构造函数，将其分成 head 和 tail
+
+- 第 `13` 行 `return *this` 但是类型被转换成 `inherited` 获得的是尾部的元祖
+
+```cpp
+tuple<int,float,string> t(41,6.3,"nico");
+t.head() //41
+t.tail().head()//6.3
+```
+
+# P42.type traits
+
+- POD Plain Old ，c 风格的数据，如struct里没有函数
+
+- c++11 提供了一系列萃取机来获得类的特性,是不是整数，类，仿函数，是否含有指针，构造，析构函数是否重要等等
+
+```cpp
+template <typename T>
+void type_traits_output(const T& x)
+{
+    cout<< "is_void\t"<< is_void<T>::value <<endl;
+    cout<< "is_integral\t"<< is_integral<T>::value <<endl;
+}
+```
+
+# P42.type traits实现
+
+- 都是使用一些模板的特化和偏特化实现
+
+```cpp
+template <typename _Tp>
+struct remove_const
+{ typedef _Tp type; };
+
+template <typename _Tp>
+struct remove_const<_Tp const>
+{ typedef _Tp type; };//特化版本 如果含有const，则定义为无const 版本 volatile 同理
+
+template <typename _Tp>
+struct remove_cv
+{ typedef typename 
+    remove_const<typename remove_volatile<_Tp>::type>::type type; }; //先移除无关的 const， volatile
+
+
+template<typename>
+struct __is_void_helper : public false_type { }; 
+
+template<>
+struct __is_void_helper<void> : public true_type { }//只有为void 才继承真
+
+
+template<typename _Tp>
+struct is_void : public __is_void_helper<typename remove_cv<_Tp>::type>::type
+{ };
+
+```
+
+- 对于一些负载的类型萃取，如 is_class 则无法看到源码，推测应该是编译器帮忙完成一些类型的推导。
