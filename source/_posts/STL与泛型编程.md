@@ -798,7 +798,7 @@ public:
                         not1(bind2nd(less<int>(),40)));//not1,bind2nd - 算法适配器，less - 仿函数
 ```
 
-- 找到vector中所有不小于40的数，现在来介绍 `bind2nd` 
+- 找到vector中所有不小于40的数，现在来介绍 `bind2nd`
 
 ---
 
@@ -1142,7 +1142,7 @@ copy(iit,eos,inserter(c,c.begin()))
 
 # P40.一个万用的 hash function
 
-- 计算一个自定义类型的hash（由常用的类型组成），假设 Custom 类 含有 `string fname,lname;long no;` 
+- 计算一个自定义类型的hash（由常用的类型组成），假设 Custom 类 含有 `string fname,lname;long no;`
 
 - 常见的类型标准库自带 hash function
 
@@ -1313,7 +1313,7 @@ void type_traits_output(const T& x)
 }
 ```
 
-# P42.type traits实现
+# P43.type traits实现
 
 - 都是使用一些模板的特化和偏特化实现
 
@@ -1346,3 +1346,21 @@ struct is_void : public __is_void_helper<typename remove_cv<_Tp>::type>::type
 ```
 
 - 对于一些负载的类型萃取，如 is_class 则无法看到源码，推测应该是编译器帮忙完成一些类型的推导。
+
+# P44 cout
+
+- `cout` 是一个对象，类型是 `_IO_ostream_withassign` 继承自 `ostream`  继承自`ostream` 继承自 `ios`
+
+- 在 `ios` 中有一系列的操作符重载，覆盖了大部分默认的类型，因此内置的类型大多可以用cout输出
+
+- 自定义类型要使用cout输出的话 需要类内进行操作符重载
+
+# P45.moveable 元素
+
+- c++11 中引入move 对容器的效率有很大影响。与运行时系统的内存内存情况也有关系
+
+- move 的实现是浅拷贝，只修改指针，并把原先指针置为NULL，之后不能再使用原来的对象
+
+- move 的构造声明参数就是将拷贝构造的 & 改为 &&
+
+
