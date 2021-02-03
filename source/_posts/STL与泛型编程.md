@@ -1361,6 +1361,6 @@ struct is_void : public __is_void_helper<typename remove_cv<_Tp>::type>::type
 
 - move 的实现是浅拷贝，只修改指针，并把原先指针置为NULL，之后不能再使用原来的对象
 
-- move 的构造声明参数就是将拷贝构造的 & 改为 &&
+- move 的构造声明参数就是将拷贝构造的 & 改为 && hexo
 
-
+- 具体的move 特性详见课程  c++11新特性
