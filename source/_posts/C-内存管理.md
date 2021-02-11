@@ -50,3 +50,24 @@ void* p4 = allocator<int>().allocate(7);// 分配7个int
 allocator<int>().deallocate((int*)p4,7)
 
 ```
+
+# P4. 基本构建一 new delete expression 上
+
+`Complex* pc = new Complex(1,2);` 会被编译器转为以下程序
+
+```cpp
+Complex *pc;
+try{
+    void *mem = operator new(sizeof(Complex));
+    pc = static_cast<Complex*>(mem);
+    pc->Complex::Complex(1,2);//只有编译器可以这样直接调用ctor
+}
+catch(std::bad_alloc){}
+```
+
+- operator new() 可以被重载，实现自定义的内存管理
+
+- 默认的 operator new() 中调用 `malloc` 申请内存，若申请失败会调用 `cllnewh` ，这个函数用户可以用来定义一些可以释放的变量，以便进行申请内存。
+
+- 直接调用ctor 要用placement new `new(p) Complex(1,2);`
+
