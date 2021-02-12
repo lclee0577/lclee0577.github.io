@@ -71,3 +71,21 @@ catch(std::bad_alloc){}
 
 - 直接调用ctor 要用placement new `new(p) Complex(1,2);`
 
+# P5. 基本构建一 new delete expression 中
+
+- delete 被编译器转为 析构函数和 operator delete，operator delete内部调用free
+
+```cpp
+Complex* pc new Complex(1,2);
+...
+delete pc;
+```
+
+被编译器转为下面
+
+```cpp
+pc->~Complex();
+operator delete(pc);//内部调用free
+```
+
+我们不能直接调用构造函数，但是可以直接调用析构函数。
