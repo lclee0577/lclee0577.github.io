@@ -90,7 +90,7 @@ operator delete(pc);//内部调用free
 
 我们不能直接调用构造函数，但是可以直接调用析构函数。
 
-# P7. 基本构建一 new delete expression 下
+# P6. 基本构建一 new delete expression 下
 
 - 测试 无法直接调用ctor
 
@@ -100,3 +100,19 @@ cout << pA->id << endl;   //1
 //pA->A::A(3);                //in VC6 : ctor. this=000307A8 id=3
                             //in GCC : [Error] cannot call constructor 'jj02::A::A' directly
 ```
+
+# P7. Array new
+
+- array new 的构造函数要有默认值，在array new 中无法赋初值
+
+```cpp
+Complex* pca = new Complex[3];//构造函数要有默认值，无法借由参数给予初值
+delete[] pca;//调用三次析构函数
+```
+
+- array new 需要搭配 array delete,否则只会调用一次析构函数。
+
+- 对于不含指针的对象没有什么影响，对含有指针的对象会造成内存泄漏（只释放了一个对象申请的内存，二删除了整个数组，导致这个部分内存无法再被使用）
+
+- 若 array new 的对象的dtor需要释放内存，则申请的内存空间中会记录对象的数目，array delete 时依次析构。
+
