@@ -89,3 +89,14 @@ operator delete(pc);//内部调用free
 ```
 
 我们不能直接调用构造函数，但是可以直接调用析构函数。
+
+# P7. 基本构建一 new delete expression 下
+
+- 测试 无法直接调用ctor
+
+```cpp
+A* pA = new A(1);         //ctor. this=000307A8 id=1
+cout << pA->id << endl;   //1
+//pA->A::A(3);                //in VC6 : ctor. this=000307A8 id=3
+                            //in GCC : [Error] cannot call constructor 'jj02::A::A' directly
+```
