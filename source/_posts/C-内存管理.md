@@ -126,3 +126,15 @@ Complex* pc new(buf)Complex(1,2);
 ...
 delete[] buf;
 ```
+
+# P9. 重载
+
+- 一般的应用程序 `new` `-> ``operator new()` `->` `::operator new()` 可以在类内重载 `Foo:: operator new()` 实现自定义的内存管理，一般很少去动用全局的 `::operator new()`
+
+```cpp
+class Foo{
+public：
+    void* operator new(size_t);
+    void operator delete(void* size_t)//第二参数为可选参数
+}
+```
