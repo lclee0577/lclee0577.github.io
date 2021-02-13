@@ -116,3 +116,13 @@ delete[] pca;//调用三次析构函数
 
 - 若 array new 的对象的dtor需要释放内存，则申请的内存空间中会记录对象的数目，array delete 时依次析构。
 
+# P8. placement new
+
+- placement new 定点的new，允许我们将 `obj` 构建在已经分配好的内存中,下面第二行
+
+```cpp
+char* buf = new char[sizeof(Complex)*3];
+Complex* pc new(buf)Complex(1,2);
+...
+delete[] buf;
+```
