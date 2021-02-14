@@ -184,7 +184,7 @@ void Foo::operator delete(void* pdead, size_t size)
 
 # P11. 重载示例 （下）
 
-- `operator new()` 可以写出多个版本，需要声明独特的参数列，且第一参数必须为 `size_t`
+- `operator new()` 可以写出多个版本，需要声明独特的参数列，且第一参数必须为 `size_t`,调用的时候括号里直接写第二个参数即可(第二个代码块)
 
 - `operator delete()` 也可以写出多个版本，但是只有相对应的 `operator new()` 构造抛出异常时，才会调用对应的 `delete`
 
@@ -243,4 +243,70 @@ void Foo::operator delete(void* pdead, size_t size)
     Foo *p6 = new (100, 'a') Foo(1); //
     Foo *p7 = new (&start) Foo(1);   //
     Foo *p8 = new Foo(1);       //
+```
+
+# P12. pre-class allocator
+
+- 当需要多次 new obj 时，可以设计接管 operator new() 一次申请一大块空间，需要时直接分配，无需每次 `malloc`。同时可以减少维护的cookie，提高内存利用率。
+
+- 版本一：类内变量由指针和数据构成，首次获取一大块内存，用指针连城链表进行维护
+
+```cpp
+ class Screen
+  {
+ public:
+    Screen(int x) : i(x){};
+    int get() { return i; }
+
+    void *operator new(size_t);
+    void operator delete(void *, size_t); //(2)
+    //! void  operator delete(void*);      //(1) 二擇一. 若(1)(2)並存,會有很奇怪的報錯 (摸不著頭緒)
+
+  private:
+    Screen *next;
+    static Screen *freeStore;
+    static const int screenChunk;
+
+  private:
+    int i;
+  };
+  Screen *Screen::freeStore = 0;
+  const int Screen::screenChunk = 24;
+
+  void *Screen::operator new(size_t size)
+  {
+    Screen *p;
+    if (!freeStore)
+    {
+      //linked list 是空的，所以攫取一大塊 memory
+      //以下呼叫的是 global operator new
+      size_t chunk = screenChunk * size;
+      freeStore = p =
+        reinterpret_cast<Screen *>(new char[chunk]);
+      //將分配得來的一大塊 memory 當做 linked list 般小塊小塊串接起來
+      for (; p != &freeStore[screenChunk - 1]; ++p)
+        p->next = p + 1;
+      p->next = 0;
+    }
+    p = freeStore;
+    freeStore = freeStore->next;
+    return p;
+  }
+
+  //! void Screen::operator delete(void *p)    //(1)
+  void Screen::operator delete(void *p, size_t) //(2)二擇一
+  {
+    //將 deleted object 收回插入 free list 前端
+  (static_cast<Screen *>(p))->next = freeStore;
+    freeStore = static_cast<Screen *>(p);
+  }
+
+    //! void Screen::operator delete(void *p)    //(1)
+  void Screen::operator delete(void *p, size_t) //(2)二擇一
+  {
+    //將 deleted object 收回插入 free list 前端
+    (static_cast<Screen *>(p))->next = freeStore;
+    freeStore = static_cast<Screen *>(p);
+  }
+
 ```
