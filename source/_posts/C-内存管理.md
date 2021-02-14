@@ -181,3 +181,66 @@ void Foo::operator delete(void* pdead, size_t size)
  free(pdead);
 }
 ```
+
+# P11. 重载示例 （下）
+
+- `operator new()` 可以写出多个版本，需要声明独特的参数列，且第一参数必须为 `size_t`
+
+- `operator delete()` 也可以写出多个版本，但是只有相对应的 `operator new()` 构造抛出异常时，才会调用对应的 `delete`
+
+- 原则上 每个版本的 `operator new()` 都要有与之对应的 `operator delete()`,但是没有写也不会报错，表示放弃对ctor的异常处理。（有的平台没有写对应版本的delete 会有警告）
+
+```cpp
+{
+  class Foo
+  {
+  public:
+    Foo() { cout << "Foo::Foo()" << endl; }
+    Foo(int)
+    {
+      cout << "Foo::Foo(int)" << endl;
+      // throw Bad();
+    }
+
+    //(1) 這個就是一般的 operator new() 的重載
+    void *operator new(size_t size)
+    {
+      cout << "operator new(size_t size), size= " << size << endl;
+      return malloc(size);
+    }
+
+    //(2) 這個就是標準庫已經提供的 placement new() 的重載 (形式)
+    //    (所以我也模擬 standard placement new 的動作, just return ptr)
+    void *operator new(size_t size, void *start)
+    {
+      cout << "operator new(size_t size, void* start), size= " << size << "  start= " << start << endl;
+      return start;
+    }
+
+    //(3) 這個才是嶄新的 placement new
+    void *operator new(size_t size, long extra)
+    {
+      cout << "operator new(size_t size, long extra)  " << size << ' ' << extra << endl;
+      return malloc(size + extra);
+    }
+
+    //(4) 這又是一個 placement new
+    void *operator new(size_t size, long extra, char init)
+    {
+      cout << "operator new(size_t size, long extra, char init)  " << size << ' ' << extra << ' ' << init << endl;
+      return malloc(size + extra);
+    }
+}
+```
+
+```cpp
+    Foo *p1 = new Foo;        //op-new(size_t)
+    Foo *p2 = new (&start) Foo;    //op-new(size_t,void*)
+    Foo *p3 = new (100) Foo;    //op-new(size_t,long)
+    Foo *p4 = new (100, 'a') Foo; //op-new(size_t,long,char)
+
+    Foo *p5 = new (100) Foo(1);     //op-new(size_t,long)  op-del(void*,long)
+    Foo *p6 = new (100, 'a') Foo(1); //
+    Foo *p7 = new (&start) Foo(1);   //
+    Foo *p8 = new Foo(1);       //
+```
