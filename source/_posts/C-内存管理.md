@@ -310,3 +310,107 @@ void Foo::operator delete(void* pdead, size_t size)
   }
 
 ```
+
+# P13. pre-class allocator 2
+
+- 使用 `struct` 包装所有数据（第 `7` 行），使用 `union` 将数据和指针进行联合（`14`行）
+
+- 初始化后，未使用数据用指针相连形成链表
+
+- 相较于上个版本，使用 `union` 联合，除去维护用的指针（未被使用的内存用指针串联，需要分配对象的内存用户会声明指针变量，因此数据和指针不会同时存在可用 `union`节省内存空间）
+
+- 第 `44` 行 判断是否发生继承
+
+- 这个版本的缺陷在于 `operator delete()` 中 没有 `free`，（程序 new 100000 个 obj，用完之后delete，但是没有将内存还给操作系统）
+
+```cpp {.line-numbers}
+  //ref. Effective C++ 2e, item10
+  //per-class allocator
+
+  class Airplane
+  { //支援 customized memory management
+  private:
+    struct AirplaneRep
+    {
+      unsigned long miles;
+      char type;
+    };
+
+  private:
+    union
+    {
+      AirplaneRep rep; //此針對 used object
+      Airplane *next;   //此針對 free list
+    };
+
+  public:
+    unsigned long getMiles() { return rep.miles; }
+    char getType() { return rep.type; }
+    void set(unsigned long m, char t)
+    {
+      rep.miles = m;
+      rep.type = t;
+    }
+
+  public:
+    static void *operator new(size_t size);
+    static void operator delete(void *deadObject, size_t size);
+
+  private:
+    static const int BLOCK_SIZE;
+    static Airplane *headOfFreeList;
+  };
+
+  Airplane *Airplane::headOfFreeList;
+  const int Airplane::BLOCK_SIZE = 512;
+
+  void *Airplane::operator new(size_t size)
+  {
+    //如果大小錯誤，轉交給 ::operator new()
+    if (size != sizeof(Airplane))
+      return ::operator new(size);
+
+    Airplane *p = headOfFreeList;
+
+    //如果 p 有效，就把list頭部移往下一個元素
+    if (p)
+      headOfFreeList = p->next;
+    else
+    {
+      //free list 已空。配置一塊夠大記憶體，
+      //令足夠容納 BLOCK_SIZE 個 Airplanes
+      Airplane *newBlock = static_cast<Airplane *>(::operator new(BLOCK_SIZE * sizeof(Airplane)));
+      //組成一個新的 free list：將小區塊串在一起，但跳過
+      //#0 元素，因為要將它傳回給呼叫者。
+      for (int i = 1; i < BLOCK_SIZE - 1; ++i)
+        newBlock[i].next = &newBlock[i + 1];
+      newBlock[BLOCK_SIZE - 1].next = 0; //以null結束
+
+      // 將 p 設至頭部，將 headOfFreeList 設至
+      // 下一個可被運用的小區塊。
+      p = newBlock;
+      headOfFreeList = &newBlock[1];
+    }
+    return p;
+  }
+
+  // operator delete 接獲一塊記憶體。
+  // 如果它的大小正確，就把它加到 free list 的前端
+  void Airplane::operator delete(void *deadObject,
+                   size_t size)
+  {
+    if (deadObject == 0)
+      return;
+    if (size != sizeof(Airplane))
+    {
+      ::operator delete(deadObject);
+      return;
+    }
+
+    Airplane *carcass =
+      static_cast<Airplane *>(deadObject);
+
+    carcass->next = headOfFreeList;
+    headOfFreeList = carcass;
+  }
+```
