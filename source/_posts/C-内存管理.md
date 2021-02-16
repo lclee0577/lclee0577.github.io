@@ -572,3 +572,51 @@ class allocator
 - 相较于之前的设计，这里application classes 与内存不再纠缠不清，所有与内存相关的细节都让`allocator`去操作。
 
 - 这样无需为每个类单独设计内存管理，这里的内存管理是类内的一个静态变量
+
+# P15. macro for static allocator
+
+- 每个类中都有很多相同的部分，因此用宏展开，代码更为简洁
+
+```cpp
+//借鏡 MFC macros.
+// DECLARE_POOL_ALLOC -- used in class definition
+#define DECLARE_POOL_ALLOC()                                           \
+public:                                                                \
+  void *operator new(size_t size) { return myAlloc.allocate(size); } \
+  void operator delete(void *p) { myAlloc.deallocate(p, 0); }        \
+                                                                       \
+protected:                                                             \
+  static allocator myAlloc;
+
+// IMPLEMENT_POOL_ALLOC -- used in class implementation file
+#define IMPLEMENT_POOL_ALLOC(class_name) \
+  allocator class_name::myAlloc;
+
+  // in class definition file
+  class Foo
+  {
+    DECLARE_POOL_ALLOC()
+  public:
+    long L;
+    string str;
+
+  public:
+    Foo(long l) : L(l) {}
+  };
+  //in class implementation file
+  IMPLEMENT_POOL_ALLOC(Foo)
+
+  //  in class definition file
+  class Goo
+  {
+    DECLARE_POOL_ALLOC()
+  public:
+    complex<double> c;
+    string str;
+
+  public:
+    Goo(const complex<double> &x) : c(x) {}
+  };
+  //in class implementation file
+  IMPLEMENT_POOL_ALLOC(Goo)
+```
