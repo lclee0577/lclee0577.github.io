@@ -245,7 +245,7 @@ void Foo::operator delete(void* pdead, size_t size)
     Foo *p8 = new Foo(1);       //
 ```
 
-# P12. pre-class allocator
+# P12. per-class allocator
 
 - 当需要多次 new obj 时，可以设计接管 operator new() 一次申请一大块空间，需要时直接分配，无需每次 `malloc`。同时可以减少维护的cookie，提高内存利用率。
 
@@ -311,9 +311,9 @@ void Foo::operator delete(void* pdead, size_t size)
 
 ```
 
-# P13. pre-class allocator 2
+# P13. per-class allocator 2
 
-- 使用 `struct` 包装所有数据（第 `7` 行），使用 `union` 将数据和指针进行联合（`14`行）
+- 使用 `struct` 包装所有数据（第 `7` 行），使用 `union` 将数据和指针进行联合（`14`行），这种设计成为嵌入式指针
 
 - 初始化后，未使用数据用指针相连形成链表
 
@@ -414,3 +414,161 @@ void Foo::operator delete(void* pdead, size_t size)
     headOfFreeList = carcass;
   }
 ```
+
+# P14. static allocator
+
+- 可以为每个需要的类写之内存管理，但是每个类都会有大量重复的代码，因此可以将这种操作独立出来写一个类
+
+```cpp
+class allocator
+  {
+  private:
+    struct obj
+    {
+      struct obj *next; //embedded pointer
+    };
+
+  public:
+    void *allocate(size_t);
+    void deallocate(void *, size_t);
+    void check();
+
+  private:
+    obj *freeStore = nullptr;
+    const int CHUNK = 5; //小一點方便觀察
+  };
+
+  void *allocator::allocate(size_t size)
+  {
+    obj *p;
+
+    if (!freeStore)
+    {
+      //linked list 是空的，所以攫取一大塊 memory
+      size_t chunk = CHUNK * size;
+      freeStore = p = (obj *)malloc(chunk);
+
+      //cout << "empty. malloc: " << chunk << "  " << p << endl;
+
+      //將分配得來的一大塊當做 linked list 般小塊小塊串接起來
+      for (int i = 0; i < (CHUNK - 1); ++i)
+      { //沒寫很漂亮, 不是重點無所謂.
+        p->next = (obj *)((char *)p + size);
+        p = p->next;
+      }
+      p->next = nullptr; //last
+    }
+    p = freeStore;
+    freeStore = freeStore->next;
+
+    //cout << "p= " << p << "  freeStore= " << freeStore << endl;
+
+    return p;
+  }
+  void allocator::deallocate(void *p, size_t)
+  {
+    //將 deleted object 收回插入 free list 前端
+    ((obj *)p)->next = freeStore;
+    freeStore = (obj *)p;
+  }
+  void allocator::check()
+  {
+    obj *p = freeStore;
+    int count = 0;
+
+    while (p)
+    {
+      cout << p << endl;
+      p = p->next;
+      count++;
+    }
+    cout << count << endl;
+  }
+  //--------------
+
+  class Foo
+  {
+  public:
+    long L;
+    string str;
+    static allocator myAlloc;
+
+  public:
+    Foo(long l) : L(l) {}
+    static void *operator new(size_t size)
+    {
+      return myAlloc.allocate(size);
+    }
+    static void operator delete(void *pdead, size_t size)
+    {
+      return myAlloc.deallocate(pdead, size);
+    }
+  };
+  allocator Foo::myAlloc;
+
+  class Goo
+  {
+  public:
+    complex<double> c;
+    string str;
+    static allocator myAlloc;
+
+  public:
+    Goo(const complex<double> &x) : c(x) {}
+    static void *operator new(size_t size)
+    {
+      return myAlloc.allocate(size);
+    }
+    static void operator delete(void *pdead, size_t size)
+    {
+      return myAlloc.deallocate(pdead, size);
+    }
+  };
+  allocator Goo::myAlloc;
+
+  //-------------
+  void test_static_allocator_3()
+  {
+    cout << "\n\n\ntest_static_allocator().......... \n";
+
+    {
+      Foo *p[100];
+
+      cout << "sizeof(Foo)= " << sizeof(Foo) << endl;
+      for (int i = 0; i < 23; ++i)
+      { //23,任意數, 隨意看看結果
+        p[i] = new Foo(i);
+        cout << p[i] << ' ' << p[i]->L << endl;
+      }
+      //Foo::myAlloc.check();
+
+      for (int i = 0; i < 23; ++i)
+      {
+        delete p[i];
+      }
+      //Foo::myAlloc.check();
+    }
+
+    {
+      Goo *p[100];
+
+      cout << "sizeof(Goo)= " << sizeof(Goo) << endl;
+      for (int i = 0; i < 17; ++i)
+      { //17,任意數, 隨意看看結果
+        p[i] = new Goo(complex<double>(i, i));
+        cout << p[i] << ' ' << p[i]->c << endl;
+      }
+      //Goo::myAlloc.check();
+
+      for (int i = 0; i < 17; ++i)
+      {
+        delete p[i];
+      }
+      //Goo::myAlloc.check();
+    }
+  }
+```
+
+- 相较于之前的设计，这里application classes 与内存不再纠缠不清，所有与内存相关的细节都让`allocator`去操作。
+
+- 这样无需为每个类单独设计内存管理，这里的内存管理是类内的一个静态变量
