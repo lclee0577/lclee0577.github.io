@@ -620,3 +620,25 @@ protected:                                                             \
   //in class implementation file
   IMPLEMENT_POOL_ALLOC(Goo)
 ```
+
+# P16. new handler
+
+- 之前提到内存分配不成功时有补救措施，让使用者释放一些内存进行分配或者终止程序
+
+```cpp
+  void noMoreMemory()
+  {
+    cerr << "out of memory";
+    abort();
+  }
+
+  set_new_handler(noMoreMemory);
+      /*
+    int* p = new int[100000000000000];   //well, so BIG!
+    assert(p);
+
+    p = new int[100000000000000000000];  //[Warning] integer constant is too large for its type
+    assert(p);
+*/
+
+```
