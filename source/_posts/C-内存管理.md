@@ -684,3 +684,38 @@ vector<string,__gnu_cxx::__pool_alloc<string>> vec;
 //G2.9
 vector<string,std::alloc<string>>
 ```
+
+# P22. G4.9 pool allocator 例用
+
+- G4.9 的标准分配器也和之前的没什么不同（应该是标准库的规定）
+
+- 在创建大量的obj时，推荐使用 __pool_alloc，减少cookie，提高内存利用率
+
+```cpp
+/*
+template<typename Alloc> 
+void cookie_test(Alloc&& alloc, size_t n)  //由於呼叫時以 temp obj (Rvalue) 傳入，所以這兒使用 &&. 只是隨意之下的搭配
+                                            //使用 &&，那麼呼叫時就不能以 Lvalue 傳入.  
+*/
+  //上述, pass by Rvalue reference 是 OK 的.
+  //但我不想那麼標新立異, 就改用 pass by value 吧
+  template <typename Alloc>
+  void cookie_test(Alloc alloc, size_t n)
+  {
+    typename Alloc::value_type *p1, *p2, *p3; //需有 typename
+    p1 = alloc.allocate(n);            //allocate() and deallocate() 是 non-static, 需以 object 呼叫之.
+    p2 = alloc.allocate(n);
+    p3 = alloc.allocate(n);
+
+    cout << "p1= " << p1 << '\t' << "p2= " << p2 << '\t' << "p3= " << p3 << '\n';
+
+    alloc.deallocate(p1, sizeof(typename Alloc::value_type)); //需有 typename
+    alloc.deallocate(p2, sizeof(typename Alloc::value_type)); //有些 allocator 對於 2nd argument 的值無所謂
+    alloc.deallocate(p3, sizeof(typename Alloc::value_type));
+  }
+
+  cookie_test(std::allocator<int>(), 1);        //相距 10h (表示帶 cookie)
+  cookie_test(__gnu_cxx::malloc_allocator<int>(), 1); //相距 10h (表示帶 cookie)
+  cookie_test(__gnu_cxx::__pool_alloc<int>(), 1);    //相距 08h (表示不帶 cookie)
+
+```
