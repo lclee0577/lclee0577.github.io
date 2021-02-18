@@ -642,3 +642,17 @@ protected:                                                             \
 */
 
 ```
+
+# P17. vc6 malloc()
+
+- debug 模式下 malloc 内存布局
+
+cookie |
+:-:|
+ debug header |
+ user block |
+ debug tail |
+ pad |
+ cookie|
+
+- 上下cookie 记录使用的分配内存的大小和使用情况，pad 用来补齐使申请的内存块为16的倍数，获得的指针指向用户区块。
