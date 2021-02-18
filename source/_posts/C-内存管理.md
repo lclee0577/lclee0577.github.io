@@ -670,3 +670,17 @@ cookie |
 - G2.9 中的`std::allocator`的行为与 VC6 和 BC5 完全一致，应该只是出于兼容的考虑
 
 - G2.9的`std::allocator`并没有在自带的STL中使用，容器的默认分配器是 `alloc`,接受的是字节大小而不是元素个数。
+
+# P21. G2.9 std::allo vs. G4.9 __pool_alloc
+
+- G4.9标准库中有许多 extented allocators, 包含 __pool_alloc 
+
+- 在G4.9 中 `std::alloc` 改名为 `__pool_alloc`
+
+```cpp
+//G4.9
+vector<string,__gnu_cxx::__pool_alloc<string>> vec;
+
+//G2.9
+vector<string,std::alloc<string>>
+```
