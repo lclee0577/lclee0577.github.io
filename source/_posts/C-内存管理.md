@@ -719,3 +719,11 @@ void cookie_test(Alloc&& alloc, size_t n)  //由於呼叫時以 temp obj (Rvalue
   cookie_test(__gnu_cxx::__pool_alloc<int>(), 1);    //相距 08h (表示不帶 cookie)
 
 ```
+
+# P23. std::alloc 运行模式
+
+- std::alloc 包含16条链表，负责8 ~ 16*8字节的数据，大于128字节的数据则有malloc服务
+
+- 每条链表每次申请2\*20个单元的数据（这里的20是经验值），前20个单元用于本条链表，后20个用作储备，如第一次在32个字节的单元申请2*20个空间，当需要用到64字节数据时，可以先取用这些储备单元。
+
+- embedded pointers 嵌入式指针，使用内存块的前4个字节作为单向链表的指针
