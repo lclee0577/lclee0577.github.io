@@ -728,7 +728,7 @@ void cookie_test(Alloc&& alloc, size_t n)  //由於呼叫時以 temp obj (Rvalue
 
 - embedded pointers 嵌入式指针，使用内存块的前4个字节作为单向链表的指针
 
-# P24, G2.9 std::alloc 运行一瞥01-05
+# P24. G2.9 std::alloc 运行一瞥01-05
 
 - 申请到的内存都先放在pool中（储备区），用指针指明头尾
 
@@ -743,3 +743,17 @@ void cookie_test(Alloc&& alloc, size_t n)  //由於呼叫時以 temp obj (Rvalue
   - 申请96bytes,由于pool为空,因此注入（malloc申请）96\*20\*2+RoundUp(1280>>4),第一个给客户，19个给list#11（累计5200，pool：2000）
 
   - 申请88，由于pool有余量，分割20个，第一个给客户，19个给list#10（累计5200，pool：240）
+
+# P25. G2.9 std::alloc 运行一瞥06-10
+
+- 续上一节例子
+
+  - 连续申请3次88，直接由list#10取出给客户（累计5200，pool：240）
+
+  - 申请8，由于pool有余量，分割20个，第一个给客户，19个给list#0（累计5200，pool：80）
+
+  - 申请104，list#12没有区块，pool余量不足一个，于是先将余下的80个给list#9（**碎片处理**），然后注入（malloc）104*20*2+RoundUp(5400>>4)，分割第一个给客户，19个给list#12（累计申请9688，pool：2408）
+
+  - 申请112，有余量，分割20个，第一个给客户，19个给list#13（累计申请9688，pool：168）
+
+  - 申请48，有余量，分割3个区块，第一个给客户，2个挂在list#5（累计9688，pool：24）
