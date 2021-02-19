@@ -773,3 +773,12 @@ void cookie_test(Alloc&& alloc, size_t n)  //由於呼叫時以 temp obj (Rvalue
 # P27-29. G2.9 std::alloc 源码剖析
 
 - 第一级分配器主要来处理之前提到的set_new_handler，与内存分配关系不大
+
+- 主要是对照代码讲解
+
+# P30. G2.9 std::alloc 观念大整理
+
+- 大部分与第29讲视频相同
+
+- deallocate 没有free，源于设计的缺陷，在一开始没有记录分配的指针，在后面loki部分会有改进
+
