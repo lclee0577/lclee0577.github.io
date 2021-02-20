@@ -879,3 +879,26 @@ void cookie_test(Alloc&& alloc, size_t n)  //由於呼叫時以 temp obj (Rvalue
   3. `array_allocator` 使用静态数组来进行内存管理，因此也不需要释放。为了保持接口一致，在deallocate()函数内什么都没有做因此也没有做内存管理，用处不大
   4. `debug_allocator`,包装了另一个分配器调试用，引入的额外变量作用类似于cookie，而allocator本身的目的就是为了较少cookie，因此对用户来说意义不大
   5. `__pool_alloc` G2.9的默认分配器alloc在G4.9中的名称 使用时要`__gnu_cxx::__pool_alloc`，注意虽然进行了很好的内存管理，但是这个分配器并没有把内存还给操作系统
+
+# P54. bitmap_allocator （上）
+
+- bitmap_allocator 私有继承自 free_list 虽然很奇怪，仅仅是因为里面需要一个list来维护
+
+- 分配大于一个元素的使用 `::operator new()`来分配，一个元素时才由这个allocator分配（容器每次都是要一个，不会出现要多个的情况）
+
+- bitmap_allocator 内部结构
+
+  - block 分配给用户的内存空间，一般为8个字节
+  - super_blocks的结构 :
+    - super block size 记录整个super_blocks的大小 第一个的大小为4+4\*2+64\*2=524
+    - use count 记录使用了几个区块
+    - 2个bitmap 记录64个blocks的使用情况，bitmap的类型是unsigned int，用每个比特位表示每个block的使用情况
+    - 一开始为 64 个blocks
+
+  - __mini_vector 内部实现了一个小型的vector，内部存储由两根指针的单元，这两根指针指向super_block的头和尾用来管理super_blocks 。这里避免使用标准库的容器因此自己内部实现（vector内部就是三根指针，详见之前学过的课程）
+
+- 当用尽一开始的64个blocks之后，下一个super_block 的容量会加倍成为128个，因此需要4个整数来表示是否使用。因此第二个super_block的大小是 4+4\*4+128\*8=1044
+
+- 同理用完这次分配的128个之后，下一次申请256个，容量为4+8\*4+256*8 = 2084
+
+- 若不曾全回收，分配规模不断倍增，若全回收，下次分配规模减半
