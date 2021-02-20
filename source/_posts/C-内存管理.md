@@ -805,3 +805,27 @@ void cookie_test(Alloc&& alloc, size_t n)  //由於呼叫時以 temp obj (Rvalue
 - 虽然 `std::allocator` 、`CRT(malloc/free)` 甚至 `heapAlloc`都是类似的使用链表来来进行内存的维护，但是这并不重复，因为`std::allocator`不能预设`CRT(malloc/free)`已经进行了内存管理，`CRT(malloc/free)`也不能预设系统API`heapAlloc`内部有内存管理。
 
 - 但是在vc10中 由于是windows平台，malloc的行为就是直接调用 `heapAlloc` 没有sbh管理
+
+# P45. 上中下3个classes分析
+
+- loki allocator 上中下三层
+
+- 底层 **Chunk**
+
+  - **pData_** : unsigned char* (指针指向一块内存)
+  - **firstAvailableBlock_** : unsigned char (第一个可用的区块编号)
+  - **blockAvailavle_**: unsigned char (剩余可用的区块数量)
+
+- 中层 **FixedAllocator**
+  
+  - **chunks_** : vector\<Chunk> (动态数组存放底层)
+  - **allocChunk_**: Chunk*
+  - **deallocChunk_**: Chunk*  (两根指针用来维护)
+
+- 上层 **SmallObjAllocator**
+
+  - **pool_**: vector\<FixedAllocator> （动态数组存放中层）
+  - **pLastAlloc**：FixedAllocator*
+  - **plastDealloc**: FixedAllocator*
+  - chunkSize: size_t
+  - maxObjectSize: size_t
