@@ -839,3 +839,21 @@ void cookie_test(Alloc&& alloc, size_t n)  //由於呼叫時以 temp obj (Rvalue
 - 当客户需要内存时，先记录`firstAvailableBlock`所在区块的地址作为返回的指针，再取得当前第一个头部数据作为`firstAvailableBlock`的更新值，同时`blockAvailavle_`减一
 
 - 当客户归还内存时，将`firstAvailableBlock`中的值填入释放的地址中，同时`firstAvailableBlock` 和 `blockAvailavle_` 自增
+
+# P47-48. class FixedAllocator 分析（上）（下）
+
+- allocChunk 和 deallocChunk 表示上一次分配/回收过的Chunk，因为往往申请或释放的内存都在临近的区域
+
+- FixedAllocator::Allocate()
+
+  - 若上次分配过的allocChunk还有则直接分配
+
+  - 若上次分配过的allocChunk没有则从vector的第一个开始暴力查找，若能找到也就可以分配
+
+  - 若找到vector底部也没有找到就重新申请Chunk并存入vector中，将allocChunk指向当前vector尾部的chunk。由于有push_back操作的存在可能会引起vector的成长，因此这里还重新将deallocChunk指向vector的头部
+
+- FixedAllocator::Deallocate()
+
+  - 当客户归还内存指针时时从deallocChunk所在位置向上向下查找
+  - 找到所在Chunk后判断是否全回收，与malloc一样有一个延缓回收的机制，有2个全回收时才归还一个
+  - 当全回收时，总是吧chunk放在vector的尾部，同时将最后一个与当前的chunk进行交换，因此只要在全回收是检查最后一个是不是已经全回收即可
