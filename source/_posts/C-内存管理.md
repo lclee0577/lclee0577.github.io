@@ -790,8 +790,18 @@ void cookie_test(Alloc&& alloc, size_t n)  //由於呼叫時以 temp obj (Rvalue
 
 - 所有malloc申请的内存都被登记在sbh之中
 
-# P42 vc6内存管理free(p)
+# P42-44. vc6内存管理free(p)
 
 - 先根据指针的地址判断落在哪一个header（一共16个header，每个header 管理 1M的内存）
 
-- 再讲地址减去header指针 初一32得到group分组，再找出对应的链表 
+- 再讲地址减去header指针 初一32得到group分组，再找出对应的链表
+
+- 将1M内存分成32个group，这种一个小块小块的操作更有可能进行整块内存的回收
+
+- 判断全回收：每个group头部有个计数器，每次malloc就会增加，每次free就会减少，当计数器为0时就全回收,变成最初始的8个page
+
+- 全回收后并没有马上还给操作系统，有两个全回收才还给操作系统一个
+
+- 虽然 `std::allocator` 、`CRT(malloc/free)` 甚至 `heapAlloc`都是类似的使用链表来来进行内存的维护，但是这并不重复，因为`std::allocator`不能预设`CRT(malloc/free)`已经进行了内存管理，`CRT(malloc/free)`也不能预设系统API`heapAlloc`内部有内存管理。
+
+- 但是在vc10中 由于是windows平台，malloc的行为就是直接调用 `heapAlloc` 没有sbh管理
