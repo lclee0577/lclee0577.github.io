@@ -776,9 +776,22 @@ void cookie_test(Alloc&& alloc, size_t n)  //由於呼叫時以 temp obj (Rvalue
 
 - 主要是对照代码讲解
 
-# P30. G2.9 std::alloc 观念大整理
+# P30-31. G2.9 std::alloc 观念大整理
 
 - 大部分与第29讲视频相同
 
 - deallocate 没有free，源于设计的缺陷，在一开始没有记录分配的指针，在后面loki部分会有改进
 
+# P32-41. vc6和vc10的malloc比较 （进入第三讲）
+
+- vc6和vc10 main函数启动前的行为，与C++startup课程讲的相同
+
+- debug模式下内存分配会加上额外开销来记录文件行号等信息
+
+- 所有malloc申请的内存都被登记在sbh之中
+
+# P42 vc6内存管理free(p)
+
+- 先根据指针的地址判断落在哪一个header（一共16个header，每个header 管理 1M的内存）
+
+- 再讲地址减去header指针 初一32得到group分组，再找出对应的链表 
