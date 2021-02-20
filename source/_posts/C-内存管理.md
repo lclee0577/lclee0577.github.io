@@ -857,3 +857,16 @@ void cookie_test(Alloc&& alloc, size_t n)  //由於呼叫時以 temp obj (Rvalue
   - 当客户归还内存指针时时从deallocChunk所在位置向上向下查找
   - 找到所在Chunk后判断是否全回收，与malloc一样有一个延缓回收的机制，有2个全回收时才归还一个
   - 当全回收时，总是吧chunk放在vector的尾部，同时将最后一个与当前的chunk进行交换，因此只要在全回收是检查最后一个是不是已经全回收即可
+
+# P49. loki_allocator总结
+
+- 精简强悍，for循环有点暴力
+
+- 用array 取代list 用 index取代poiner 手段特殊
+
+- 可以很简单的判断全回收（与前面malloc一样有个计数器），进而还给操作系统
+
+- 可以暂缓归还
+
+- loki_allocator的最佳客户是容器，但是其内部又含有一个容器vector。这并不冲突，因为内部的这个vector使用的是标准库的内存分配
+
