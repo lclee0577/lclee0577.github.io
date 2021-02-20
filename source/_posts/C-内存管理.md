@@ -870,3 +870,12 @@ void cookie_test(Alloc&& alloc, size_t n)  //由於呼叫時以 temp obj (Rvalue
 
 - loki_allocator的最佳客户是容器，但是其内部又含有一个容器vector。这并不冲突，因为内部的这个vector使用的是标准库的内存分配
 
+# P50-53. GNU C++ 对allocator的描述
+
+- GNU C++ 有很多allocator。除了之前详细解释的__pool_alloc之外，还有一个bitmap_allocator 值得我们学习，其余的对于我们意义不大
+
+  1. `new_allocator`  vs2013和G4.9 的标准分配器 `new_allocator` 里面的分配与释放就是调用 operator new() 和operator delete()，并没有特殊的设计
+  2. `malloc_allocator` 就是直接调用malloc和free
+  3. `array_allocator` 使用静态数组来进行内存管理，因此也不需要释放。为了保持接口一致，在deallocate()函数内什么都没有做因此也没有做内存管理，用处不大
+  4. `debug_allocator`,包装了另一个分配器调试用，引入的额外变量作用类似于cookie，而allocator本身的目的就是为了较少cookie，因此对用户来说意义不大
+  5. `__pool_alloc` G2.9的默认分配器alloc在G4.9中的名称 使用时要`__gnu_cxx::__pool_alloc`，注意虽然进行了很好的内存管理，但是这个分配器并没有把内存还给操作系统
