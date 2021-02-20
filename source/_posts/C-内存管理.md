@@ -829,3 +829,13 @@ void cookie_test(Alloc&& alloc, size_t n)  //由於呼叫時以 temp obj (Rvalue
   - **plastDealloc**: FixedAllocator*
   - chunkSize: size_t
   - maxObjectSize: size_t
+
+# P46. loki_allocator行为图解
+
+- 申请一块内存分成64个块，借用每块的头部保存下一个index，
+
+- 刚开始时 `firstAvailableBlock`是0，第一个内存空间的头部是1即下一个index
+
+- 当客户需要内存时，先记录`firstAvailableBlock`所在区块的地址作为返回的指针，再取得当前第一个头部数据作为`firstAvailableBlock`的更新值，同时`blockAvailavle_`减一
+
+- 当客户归还内存时，将`firstAvailableBlock`中的值填入释放的地址中，同时`firstAvailableBlock` 和 `blockAvailavle_` 自增
