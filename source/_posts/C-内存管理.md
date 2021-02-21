@@ -920,3 +920,5 @@ void cookie_test(Alloc&& alloc, size_t n)  //由於呼叫時以 temp obj (Rvalue
   - 不修改类内数据的函数需要用在后面用const修饰，否则const对象无法调用这个函数
 
 - 当成员函数的const 和 non-const 版本同时存在时，const obj 只能调用 const 版本，non-const obj 智能调用 non-const 版本
+
+# P57-60 都是之前的视频
