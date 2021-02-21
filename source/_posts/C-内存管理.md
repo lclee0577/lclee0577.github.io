@@ -912,3 +912,11 @@ void cookie_test(Alloc&& alloc, size_t n)  //由於呼叫時以 temp obj (Rvalue
 - 全回收时super_block使用一个名为freelist的__mini_vector维护，并排好序，当回收个数超过64个时将最大的那个super_block还给操作系统
 
 - 当freelist有super_block时，不会重新创建super_block
+
+# P56. 谈谈const
+
+- const 在**成员函数**参数列后面（小括号后面），函数本体前面（大括号前面），表示这个成员函数不改变类内变量的数据（不能用作全局函数）
+
+  - 不修改类内数据的函数需要用在后面用const修饰，否则const对象无法调用这个函数
+
+- 当成员函数的const 和 non-const 版本同时存在时，const obj 只能调用 const 版本，non-const obj 智能调用 non-const 版本
