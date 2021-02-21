@@ -902,3 +902,13 @@ void cookie_test(Alloc&& alloc, size_t n)  //由於呼叫時以 temp obj (Rvalue
 - 同理用完这次分配的128个之后，下一次申请256个，容量为4+8\*4+256*8 = 2084
 
 - 若不曾全回收，分配规模不断倍增，若全回收，下次分配规模减半
+
+# P55. bitmap_allocator （下）
+
+- 当 super_block#1 回收2个blocks，且尚未全回收，若接下来需要分配2个blocks，从后面的super_block取出
+
+- 若后面的super_block用光时，先使用当前回收的这两个空间，再新建一个super_block
+
+- 全回收时super_block使用一个名为freelist的__mini_vector维护，并排好序，当回收个数超过64个时将最大的那个super_block还给操作系统
+
+- 当freelist有super_block时，不会重新创建super_block
