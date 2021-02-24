@@ -263,3 +263,189 @@ public:
 - Decorator类在接口上表现为is-a Component的继承关系，即 Decorator类继承了Component类所具有的接口。但在实现上又 表现为has-a Component的组合关系，即Decorator类又使用了另外一个Component类。（装饰类继承和组合了同一个类，这是十分少见的。继承是为了保持接口的一致，组合是为了对具体类新型包装增加新的功能）
 
 - Decorator模式的目的并非解决“多子类衍生的多继承”问题， Decorator模式应用的要点在于解决“主体类在多个方向上的扩展 功能”——是为“装饰”的含义。
+
+# P7. 桥模式
+
+- 属于单一职责模式
+
+- 模式定义：将抽象部分(业务功能)与实现部分(平台实现)分离，使它们都可以独立地变化。
+
+- 例如：信息发送业务有移动和pc两个平台，精简版和完整版2个版本
+
+```cpp {.line-numbers}
+class Messager{
+public:
+    virtual void Login(string username, string password)=0;
+    virtual void SendMessage(string message)=0;
+    virtual void SendPicture(Image image)=0;
+
+    virtual void PlaySound()=0;
+    virtual void DrawShape()=0;
+    virtual void WriteText()=0;
+    virtual void Connect()=0;
+    
+    virtual ~Messager(){}
+};
+```
+
+- 若使用继承方法，就会有移动精简发送→移动发送→发送基类 等等这四种类，然而精简和完整版的流程与平台实现无关，因此需要将其剥离
+
+- 与平台实现相关的成员函数为7-10行，因此需将其与实现相关部分变成一个子类,在运行时装配 
+
+```cpp
+class MessagerImp{
+public:
+    virtual void PlaySound()=0;
+    virtual void DrawShape()=0;
+    virtual void WriteText()=0;
+    virtual void Connect()=0;
+    
+    virtual MessagerImp(){}
+};
+
+class Messager{
+protected:
+     MessagerImp* messagerImp;//...
+public:
+    virtual void Login(string username, string password)=0;
+    virtual void SendMessage(string message)=0;
+    virtual void SendPicture(Image image)=0;
+    
+    virtual ~Messager(){}
+};
+
+class PCMessagerImp : public MessagerImp{
+public:
+    
+    virtual void PlaySound(){
+        //**********
+    }
+    virtual void DrawShape(){
+        //**********
+    }
+    virtual void WriteText(){
+        //**********
+    }
+    virtual void Connect(){
+        //**********
+    }
+};
+
+```
+
+---
+
+```cpp
+
+class MessagerLite :public Messager {
+
+public:
+    
+    virtual void Login(string username, string password){
+        
+        messagerImp->Connect();
+        //........
+    }
+    virtual void SendMessage(string message){
+        
+        messagerImp->WriteText();
+        //........
+    }
+    virtual void SendPicture(Image image){
+        
+        messagerImp->DrawShape();
+        //........
+    }
+};
+
+void Process(){
+    //运行时装配
+    MessagerImp* mImp=new PCMessagerImp();
+    Messager *m =new Messager(mImp);
+}
+
+```
+
+## brige模式要点总结
+
+- Bridge模式使用“对象间的组合关系”解耦了抽象和实现之间固 有的绑定关系，使得抽象和实现可以沿着各自的维度来变化。所谓抽象和实现沿着各自纬度的变化，即“子类化”它们。
+
+- Bridge模式有时候类似于多继承方案，但是多继承方案往往违背 单一职责原则（即一个类只有一个变化的原因），复用性比较差。Bridge模式是比多继承方案更好的解决方法。
+
+- Bridge模式的应用一般在“两个非常强的变化维度”，有时一个 类也有多于两个的变化维度，这时可以使用Bridge的扩展模式。
+ 
+# P8. 工厂方法
+
+- 属于对象创建模式，通过这个模式来避免`new`过程中所在造成的紧耦合（依赖于具体类）。它是接口抽象后的第一步工作
+
+- 在软件系统中，经常面临着创建对象的工作；由于需求的变化，需要创建的对象的具体类型经常变化
+
+- 定义一个用于创建对象的接口，让子类决定实例化哪一个类。Factory Method使得一个类的实例化延迟（目的：解耦，手段：虚函数）到子类
+
+- 举例：创建多种不同类型的分割器
+
+```cpp
+class MainForm : public Form
+{
+    SplitterFactory*  factory;//工厂
+
+public:
+    MainForm(SplitterFactory*  factory){
+        this->factory=factory;
+    }
+    
+    void Button1_Click(){ 
+        ISplitter * splitter=
+            factory->CreateSplitter(); //多态new
+        splitter->split();
+    }
+};
+```
+
+```cpp
+//抽象类
+class ISplitter{
+public:
+    virtual void split()=0;
+    virtual ~ISplitter(){}
+};
+
+
+//工厂基类
+class SplitterFactory{
+public:
+    virtual ISplitter* CreateSplitter()=0;
+    virtual ~SplitterFactory(){}
+};
+
+class BinarySplitter : public ISplitter{
+    
+};
+
+class TxtSplitter: public ISplitter{
+    
+};
+
+class BinarySplitterFactory: public SplitterFactory{
+public:
+    virtual ISplitter* CreateSplitter(){
+        return new BinarySplitter();
+    }
+};
+
+class TxtSplitterFactory: public SplitterFactory{
+public:
+    virtual ISplitter* CreateSplitter(){
+        return new TxtSplitter();
+    }
+};
+
+```
+
+## 工厂方法要点总结
+
+- Factory Method模式用于隔离类对象的使用者和具体类型之间的 耦合关系。面对一个经常变化的具体类型，紧耦合关系(new)会导 致软件的脆弱
+
+- Factory Method模式通过面向对象的手法（多态），将所要创建的具体对象工作**延迟**到子类，从而实现一种扩展（而非更改）的策略，较好地解决了这种紧耦合关系（需要不同对象时只需新建不同类型工厂，并传递该工厂指针即可，对原有运行代码`MainForm`无需更改）
+
+- Factory Method模式解决“单个对象”的需求变化。缺点在于要 求创建方法/参数相同。
