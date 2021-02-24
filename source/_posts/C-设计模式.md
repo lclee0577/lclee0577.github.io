@@ -448,4 +448,90 @@ public:
 
 - Factory Method模式通过面向对象的手法（多态），将所要创建的具体对象工作**延迟**到子类，从而实现一种扩展（而非更改）的策略，较好地解决了这种紧耦合关系（需要不同对象时只需新建不同类型工厂，并传递该工厂指针即可，对原有运行代码`MainForm`无需更改）
 
-- Factory Method模式解决“单个对象”的需求变化。缺点在于要 求创建方法/参数相同。
+- Factory Method模式解决“单个对象”的需求变化。缺点在于要求创建方法/参数相同。
+
+# P9. 抽象工厂
+
+- 与工厂模式只有细微变化：一系列相互依赖的对象的创建工作
+
+- 模式定义：提供一个接口，让该接口负责创建一系列“相关或者相互依赖的对象”，无需指定它们具体的类。
+- 举例：有一系列数据库相关操作，连接、命令、设置连接、读取。同时需要支持不同的数据库
+
+  - 按照之前工厂方法，需要操作、连接、读取的基类、工厂、和具体工厂 （这里会写出很多类）
+
+```cpp
+class EmployeeDAO{
+
+IDBConnectionFactory* dbConnectionFactory;
+IDBCommandFactory* dbCommandFactory;
+IDataReaderFactory* dataReaderFactory;
+
+public:
+vector<EmployeeDO> GetEmployees(){
+    IDBConnection* connection =
+        dbConnectionFactory->CreateDBConnection();
+    connection->ConnectionString("...");
+
+    IDBCommand* command =
+        dbCommandFactory->CreateDBCommand();
+    command->CommandText("...");
+    command->SetConnection(connection); //关联性
+
+    IDBDataReader* reader = command->ExecuteReader(); //关联性
+    while (reader->Read()){
+
+    }
+}
+};
+```
+
+- 由于读取、命令、连接有很强的关联性，必须要使用同一种类型的数据库，因此这三个操作应该由同一个工厂产生（高内聚）
+
+```cpp
+class IDBFactory{
+public:
+    virtual IDBConnection* CreateDBConnection()=0;
+    virtual IDBCommand* CreateDBCommand()=0;
+    virtual IDataReader* CreateDataReader()=0;
+    
+};
+
+class SqlDBFactory:public IDBFactory{
+public:
+    virtual IDBConnection* CreateDBConnection(){/*...*/};
+    virtual IDBCommand* CreateDBCommand(){/*...*/};
+    virtual IDataReader* CreateDataReader(){/*...*/};
+};
+
+class EmployeeDAO{
+    IDBFactory* dbFactory;
+    
+public:
+    vector<EmployeeDO> GetEmployees(){
+        IDBConnection* connection =
+            dbFactory->CreateDBConnection();
+        connection->ConnectionString("...");
+
+        IDBCommand* command =
+            dbFactory->CreateDBCommand();
+        command->CommandText("...");
+        command->SetConnection(connection); //关联性
+
+        IDBDataReader* reader = command->ExecuteReader(); //关联性
+        while (reader->Read()){
+
+        }
+
+    }
+};
+```
+
+## 抽象工厂要点总结
+
+- 抽象工厂更形象的解释是家族工厂，生产一系列相关的类
+
+- 如果没有应对“多系列对象构建”的需求变化，则没有必要使用Abstract Factory模式，这时候使用简单的工厂完全可以。
+
+- “系列对象”指的是在某一特定系列下的对象之间有相互依赖、或作用的关系。不同系列的对象之间不能相互依赖。
+
+- Abstract Factory模式主要在于应对“新系列”的需求变动。其缺点在于难以应对“新对象”的需求变动。
