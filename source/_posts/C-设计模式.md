@@ -136,6 +136,7 @@ categories:
 
 # P5. 观察者模式
 
+- 属于组件协作模式
 - 当需要建立一种通知依赖关系，当一个对象状态发生改变时，所有的依赖（观察者对象）都将得到通知
 
 - 设想如下场景： 在界面上显示任务的运行进度
@@ -155,3 +156,110 @@ categories:
 - 观察者自己决定是否需要订阅通知，目标对象对此一无所知。（界面类中是否增加观察者）
 
 - Observer模式是基于事件的UI框架中非常常用的设计模式，也是MVC模式的一个重要组成部分。
+
+# P6. 装饰模式
+
+- 属于单一责任模式（并不是其他模式没有责任问题，而是这个模式在责任问题上特别明显）
+
+- 过度的使用继承来拓展对象的功能会导致子类的膨胀，根据需求来动态实现子类拓展避免子类膨胀
+
+- 模式定义：动态（组合）地给一个对象增加一些额外的职责。就增加功能而言，Decorator模式比生成子类（继承）更为灵活（消除重复代码 & 减少子类个数）
+
+- 举例：有一系列流如文件流、网络流、内存流，有一系列操作如加密、缓存。若使用继承来实现这些操作则需要定义很多次继承，如加密缓存文件流→缓存文件流→文件流→流。一旦操作的种类增加，将需要写出许多子类，而且包含大量重复代码（加密和缓存的手段相同）
+  
+  - 流的种类和操作并不是继承关系，应该是组合关系
+
+---
+
+```cpp
+//业务操作
+class Stream{
+
+public:
+    virtual char Read(int number)=0;
+    virtual void Seek(int position)=0;
+    virtual void Write(char data)=0;
+    
+    virtual ~Stream(){}
+};
+
+//主体类
+class FileStream: public Stream{
+public:
+    virtual char Read(int number){
+        //读文件流
+    }
+    virtual void Seek(int position){
+        //定位文件流
+    }
+    virtual void Write(char data){
+        //写文件流
+    }
+
+};
+```
+
+- 版本一：可以看到加密流不仅继承父类，还包含一个指向父类的指针（这个可以认为是装饰模式的重要标志）
+
+- 这里的继承是为了保持接口一致，父类指针时为了实现加密操作
+
+```cpp
+
+class CryptoStream: public Stream {
+
+Stream* stream;//...
+
+public:
+CryptoStream(Stream* stm):stream(stm){
+
+}
+
+
+virtual char Read(int number){
+    
+    //额外的加密操作...
+    stream->Read(number);//读文件流
+}
+//...
+}
+/////使用方法
+FileStream* s1=new FileStream();//FileStream 继承自Stream
+CryptoStream* s2=new CryptoStream(s1);
+```
+
+---
+
+- 版本二：虽然版本一已经实现了大部分功能，但是当操作种类增加时每类内包含的一个父类指针时固定的。因此可以将指针和装饰操作抽象为一个装饰类
+
+```cpp
+class DecoratorStream: public Stream{
+protected:
+    Stream* stream;//...
+    
+    DecoratorStream(Stream * stm):stream(stm){
+    
+    }
+    
+};
+
+class CryptoStream: public DecoratorStream {
+public:
+    CryptoStream(Stream* stm):DecoratorStream(stm){
+    
+    }
+    
+    virtual char Read(int number){
+       
+        //额外的加密操作...
+        stream->Read(number);//读文件流
+    }
+    }
+```
+
+## 装饰模式要点总结
+
+- 通过采用组合而非继承的手法， Decorator模式实现了在运行时 动态扩展对象功能的能力而且可以根据需要扩展多个功能。避免 了使用继承带来的“灵活性差”和“多子类衍生问题”
+
+- Decorator类在接口上表现为is-a Component的继承关系，即 Decorator类继承了Component类所具有的接口。但在实现上又 表现为has-a Component的组合关系，即Decorator类又使用了另外一个Component类。（装饰类继承和组合了同一个类，这是十分少见的。继承是为了保持接口的一致，组合是为了对具体类新型包装增加新的功能）
+
+- Decorator模式的目的并非解决“多子类衍生的多继承”问题， Decorator模式应用的要点在于解决“主体类在多个方向上的扩展 功能”——是为“装饰”的含义。
