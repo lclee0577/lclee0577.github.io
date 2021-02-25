@@ -592,3 +592,185 @@ public:
 - Prototype模式对于“如何创建易变类的实体对象”采用“原型克隆”的方法来做，它使得我们可以非常灵活地动态创建“拥有某些稳定接口”的新对象——所需工作仅仅是注册一个新类的对象（即原型），然后在任何需要的地方克隆。
 
 - Prototype模式中的clone方法可以利用某些框架中的序列化来实现深拷贝
+
+# P11. 构建器
+
+- 属于对象创建模式，（不常用）
+
+- “一个复杂对象”的创建工作，其通常由各个部分的子对象用一定的算法构成；由于需求的变化，这个复杂对象的各个部分经常面临着**剧烈的变化**，但是将它们组合在一起的算法却**相对稳定** (与模板方法很像，但是这里是用来创建对象)
+
+---
+
+- 举例：`House`的需要按照一定流程创建5个部分，这里创建流程和5个部分的创建都很复杂。
+
+  - 首先将`House`类与他的创建过程分离
+  - 将5个部分的具体实现（`HouseBuilder` 第5行）与创建流程(`HouseDirector`第46行)分离（若创建流程和步骤不复杂放在一起也行）
+
+```cpp {.line-numbers}
+
+class House{
+    //....
+};
+
+class HouseBuilder {
+public:
+    House* GetResult(){
+        return pHouse;
+    }
+    virtual ~HouseBuilder(){}
+protected:
+    
+    House* pHouse;
+    virtual void BuildPart1()=0;
+    virtual void BuildPart2()=0;
+    virtual void BuildPart3()=0;
+    virtual void BuildPart4()=0;
+    virtual void BuildPart5()=0;
+};
+
+class StoneHouse: public House{
+
+};
+
+class StoneHouseBuilder: public HouseBuilder{
+protected:
+    
+    virtual void BuildPart1(){
+        //pHouse->Part1 = ...;
+    }
+    virtual void BuildPart2(){
+        
+    }
+    virtual void BuildPart3(){
+        
+    }
+    virtual void BuildPart4(){
+        
+    }
+    virtual void BuildPart5(){
+        
+    }
+    
+};
+
+class HouseDirector{
+    
+public:
+    HouseBuilder* pHouseBuilder;
+    
+    HouseDirector(HouseBuilder* pHouseBuilder){
+        this->pHouseBuilder=pHouseBuilder;
+    }
+    
+    House* Construct(){
+        
+        pHouseBuilder->BuildPart1();
+        
+        for (int i = 0; i < 4; i++){
+            pHouseBuilder->BuildPart2();
+        }
+        
+        bool flag=pHouseBuilder->BuildPart3();
+        
+        if(flag){
+            pHouseBuilder->BuildPart4();
+        }
+        
+        pHouseBuilder->BuildPart5();
+        
+        return pHouseBuilder->GetResult();
+    }
+};
+
+```
+
+## Builder要点总结
+
+- Builder 模式主要用于“分步骤构建一个复杂的对象”。在这其中“分步骤”是一个稳定的算法，而复杂对象的各个部分则经常变化。
+
+- 变化点在哪里，封装哪里—— Builder模式主要在于应对“复杂对象各个部分”的频繁需求变动。其缺点在于难以应对“分步骤构建算法”的需求变动。
+
+- 在Builder模式中，要注意不同语言中构造器内调用虚函数的差别（ C++ vs. C# )
+
+# P12. 单件模式
+
+- 属于性能对象模式
+
+- 面向对象很好地解决了"抽象"问题，但是不可避免的要付出一定代价。（通常继承和虚函数带来的影响可以忽略不计，但是大规模的应用可能会出现性能问题）
+
+- 有些特殊的类，必须保证他们在系统效率中只存在一个实例，（如保证逻辑正确、良好的效率）。因此需要绕过常规的构造器，提供一种机制来保证一个类只有一个实例。这种功能应该由类的设计者来实现，而不是使用者的责任
+
+- 模式定义：保证一个类仅有一个实例，并提供一个该实例的全局访问点
+
+- 双检查锁由于内存读写reorder不安全。编译器出于优化的目的会先返回地址再进行构造，导致读到的内存里还没有完成构造，需要使用原子操作
+
+```cpp
+class Singleton{
+private:
+    Singleton();
+    Singleton(const Singleton& other);
+public:
+    static Singleton* getInstance();
+    static Singleton* m_instance;
+};
+
+Singleton* Singleton::m_instance=nullptr;
+
+//线程非安全版本 单线程可用
+Singleton* Singleton::getInstance() {
+    if (m_instance == nullptr) {
+        m_instance = new Singleton();
+    }
+    return m_instance;
+}
+
+
+//线程安全版本，但锁的代价过高
+Singleton* Singleton::getInstance() {
+    Lock lock;
+    if (m_instance == nullptr) {
+        m_instance = new Singleton();
+    }
+    return m_instance;
+}
+
+
+//双检查锁，但由于内存读写reorder不安全
+Singleton* Singleton::getInstance() {
+    
+    if(m_instance==nullptr){
+        Lock lock;
+        if (m_instance == nullptr) {
+            m_instance = new Singleton();
+        }
+    }
+    return m_instance;
+}
+
+//C++ 11版本之后的跨平台实现 (volatile)
+std::atomic<Singleton*> Singleton::m_instance;
+std::mutex Singleton::m_mutex;
+
+Singleton* Singleton::getInstance() {
+    Singleton* tmp = m_instance.load(std::memory_order_relaxed);
+    std::atomic_thread_fence(std::memory_order_acquire);//获取内存fence
+    if (tmp == nullptr) {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        tmp = m_instance.load(std::memory_order_relaxed);
+        if (tmp == nullptr) {
+            tmp = new Singleton;
+            std::atomic_thread_fence(std::memory_order_release);//释放内存fence
+            m_instance.store(tmp, std::memory_order_relaxed);
+        }
+    }
+    return tmp;
+}
+```
+
+## Singleton要点总结
+
+- Singleton 模式中的实例构造器可以设置为protected以允许子类派生
+
+- Singleton 模式一般不要支持拷贝构造函数和Clone接口，因为这有可能导致多个对象实例，与Singleton初衷违背
+
+- 多线程环境下需要借助C++11 的原子模式实现
