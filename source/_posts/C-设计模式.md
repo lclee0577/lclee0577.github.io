@@ -528,10 +528,67 @@ public:
 
 ## 抽象工厂要点总结
 
-- 抽象工厂更形象的解释是家族工厂，生产一系列相关的类
+- 抽象工厂更形象的解释是家族工厂，生产一系列相关的类，工厂方法可以看成抽象工厂中的一个特例
 
 - 如果没有应对“多系列对象构建”的需求变化，则没有必要使用Abstract Factory模式，这时候使用简单的工厂完全可以。
 
 - “系列对象”指的是在某一特定系列下的对象之间有相互依赖、或作用的关系。不同系列的对象之间不能相互依赖。
 
 - Abstract Factory模式主要在于应对“新系列”的需求变动。其缺点在于难以应对“新对象”的需求变动。
+
+# P10. 原型模式
+
+- 属于对象创建模式，相较于工厂模式简单一些，是工厂模式的一种变体（实际中用的不是特别多）
+
+- 对象有很复杂的中间状态，从工厂生产出来的步骤过于复杂，使用原型模式直接进行拷贝。这些对象经常面临剧烈的变化，但是却拥有稳定一致的接口
+
+- 模式定义：使用原型实例指定创建对象的种类，然后通过拷贝这些原型来创建新的对象
+
+- 举例：具体实现上就是将抽象类与与工程合并，工厂创建变为克隆
+
+```cpp
+class ISplitter{//抽象类
+public:
+    virtual void split()=0;
+    virtual ISplitter* clone()=0; //通过克隆自己来创建对象
+    
+    virtual ~ISplitter(){}
+
+};
+
+//具体类
+class BinarySplitter : public ISplitter{
+public:
+    virtual ISplitter* clone(){
+        return new BinarySplitter(*this);//调用拷贝构造函数克隆当前状态
+    }
+};
+
+class MainForm : public Form
+{
+    ISplitter*  prototype;//原型对象
+
+public:
+    
+    MainForm(ISplitter*  prototype){
+        this->prototype=prototype;
+    }
+    
+    void Button1_Click(){
+
+        ISplitter * splitter=
+            prototype->clone(); //克隆原型
+            //prototype->split;    不能直接使用，原型对象是专门供你克隆的，真正使用的时候，我们要使用新的对象
+        
+        splitter->split();
+    }
+};
+```
+
+## 原型模式要点总结
+
+- Prototype模式同样用于隔离类对象的使用者和具体类型（易变类）之间的耦合关系。它同样要求这些“易变类”拥有“稳定的接口”
+
+- Prototype模式对于“如何创建易变类的实体对象”采用“原型克隆”的方法来做，它使得我们可以非常灵活地动态创建“拥有某些稳定接口”的新对象——所需工作仅仅是注册一个新类的对象（即原型），然后在任何需要的地方克隆。
+
+- Prototype模式中的clone方法可以利用某些框架中的序列化来实现深拷贝
