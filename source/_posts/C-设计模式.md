@@ -774,3 +774,54 @@ Singleton* Singleton::getInstance() {
 - Singleton 模式一般不要支持拷贝构造函数和Clone接口，因为这有可能导致多个对象实例，与Singleton初衷违背
 
 - 多线程环境下需要借助C++11 的原子模式实现
+
+# P13. 享元模式
+
+- 纯粹对象方案的问题在于大量细粒度的对象会很快充斥在系统中
+
+- 模式定义：运用共享技术有效的支持大量细粒度的对象
+
+```cpp
+class Font {//字体
+private:
+    string key;//字体唯一标识
+public:
+    Font(const string& key){
+        //...
+    }
+};
+```
+
+- 若为文章中的每个字符创建一个字体，导致大量的重复字体类存在，我们可以定义一个字体的池，当该字体的类对象已经存在于该池内就不用再创建该类对象，这类似于word中的操作
+
+```cpp
+class FontFactory{
+private:
+    map<string,Font* > fontPool;//字体池   
+public:
+    Font* GetFont(const string& key){
+        map<string,Font*>::iterator item=fontPool.find(key);
+          if(item!=footPool.end()){
+            return fontPool[key];
+        }
+        else{
+            Font* font = new Font(key);
+            fontPool[key]= font;
+            return font;
+        }
+    }
+    void clear(){
+        //...
+    }
+};
+```
+
+## Flyweight要点总结
+
+- 面向对象很好的解决了抽象的问题，但是作为一个运行在 机器中的程序实体，我们需要考虑对象的代价问题。Flyweight主要解决面向对象的代价问题，一般不触及面向对象的抽象性问题。
+- Flyewight采用对象共享的做法来降低系统中对象的个数，从而降低细粒度对象给系统带来的内存压力。在具体实现方面，要注意对象状态的处理。（一般这些对象时只读的，否则可能出现共享出错）
+- 对象的数量多少才算大？这需要我们仔细地根据具体应用情况进行评估，而不能凭空臆断（sizeof）
+
+# P14. 门面模式
+
+- 属于接口隔离模式
