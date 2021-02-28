@@ -1215,3 +1215,93 @@ int main()
 - 实现Command接口的具体命令对象ConcreteCommand有时候根据需要可能会保存一些额外的状态信息。通过使用Composite模式，可以将多个“命令”封装为一个“复合命令”MacroCommand。
 
 - Command模式与C++中的函数对象有些类似。但二者定义行为接口的规范有所区别：Command以面向对象中的“接口-实现”来定义行为接口规范，更严格，但有性能损失；C++函数对象以函数签名来定义行为接口规范，更灵活，性能更高。(因此在C++中，大部分命令模式被仿函数代替)
+
+# P24. 访问器
+
+- 在软件构建过程中，由于需求的变化，某些类层次结构中常常需要增加新的行为（方法），如果直接在基类中做这样的更改，将会给子类带来很繁重的变更负担，甚至破坏原有设计。
+- 如何在不更改类层次结构的前提下，在运行时根据需要透明地为类层次结构上的各个类动态添加新的操作，从而避免上述问题？
+
+​- 模式定义:表示一个作用于某对象结构中的各元素的操作。使得可以在不改变（稳定）各元素的类的前提下定义（扩展）作用于这些元素的新车操作（变化）
+
+```cpp
+class Visitor;
+
+class Element
+{
+public:
+    virtual void accept(Visitor& visitor) = 0; //第一次多态辨析
+
+    virtual ~Element(){}
+};
+
+class ElementA : public Element
+{
+public:
+    void accept(Visitor &visitor) override {
+        visitor.visitElementA(*this);
+    }
+};
+
+class ElementB : public Element
+{
+public:
+    void accept(Visitor &visitor) override {
+        visitor.visitElementB(*this); //第二次多态辨析
+    }
+
+};
+
+class Visitor{
+public:
+    virtual void visitElementA(ElementA& element) = 0;
+    virtual void visitElementB(ElementB& element) = 0;
+    
+    virtual ~Visitor(){}
+};
+
+//==================================这里要求上面的东西都不变，这在现实中往往很难办到
+
+//扩展1
+class Visitor1 : public Visitor{
+public:
+    void visitElementA(ElementA& element) override{
+        cout << "Visitor1 is processing ElementA" << endl;
+    }
+        
+    void visitElementB(ElementB& element) override{
+        cout << "Visitor1 is processing ElementB" << endl;
+    }
+};
+     
+//扩展2
+class Visitor2 : public Visitor{
+public:
+    void visitElementA(ElementA& element) override{
+        cout << "Visitor2 is processing ElementA" << endl;
+    }
+    
+    void visitElementB(ElementB& element) override{
+        cout << "Visitor2 is processing ElementB" << endl;
+    }
+};
+        
+int main()
+{
+    Visitor2 visitor;
+    ElementB elementB;
+    elementB.accept(visitor);// double dispatch
+    
+    ElementA elementA;
+    elementA.accept(visitor);
+
+    return 0;
+}
+```
+
+## Visitor 要点总结
+
+- Visitor模式通过所谓双重分发（double dispatch）来实现在不更改（不添加心的操作-编译时）Element类层次结构的前提下，在运行时透明地为类层次结构上的各个类动态添加新的操作（支持变化）
+
+- 所谓双重分发即Visitor模式中间包括了两个多态分发（注意其中的多态机制）：第一个为accept方法的多态辨析；第二个为visitElementX方法的多态辨析。
+
+- Visitor模式的最大缺点在于扩展类层次结构（增添新的Element子类），会导致Visitor类的改变。因此Visitor模式适用于“Element类**层次结构稳定**，而其中的**操作却经常面临频繁改动**”。
