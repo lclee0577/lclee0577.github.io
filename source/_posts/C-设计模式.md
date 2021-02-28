@@ -1140,3 +1140,78 @@ void MyAlgorithm()
 - 如果请求传递到职责链的末尾仍得不到处理，应该有一个合理的缺省机制。这也是每个接受对象的责任，而不是发出请求的对象的责任。
 
 - 随着数据结构的发展，现在这个模式更像是一种数据结构（不怎么流行）
+
+# P23. 命令模式
+
+- 属于行为变化模式
+
+- 在软件构建过程中，“行为请求者”与“行为实现者“通常呈现一种”紧耦合“。但某些场合——比如需要对行为进行”记录、撤销/重做（undo/redo）、事务”等处理，这种无法抵御变化的紧耦合是不合适的。
+- 在这种情况下，如何将“行为请求者”与“行为实现者”解耦？将一个组行为抽象为对象，可以实现二者之间的松耦合。
+
+- 模式定义：将一个请求（行为） ，从而使你可用不用的请求对客户进行参数化；对请求排队或记录请求日志，以及支持可撤销的操作。
+
+```cpp
+class Command
+{
+public:
+    virtual void execute() = 0;
+};
+
+class ConcreteCommand1 : public Command
+{
+    string arg;
+public:
+    ConcreteCommand1(const string & a) : arg(a) {}
+    void execute() override
+    {
+        cout<< "#1 process..."<<arg<<endl;
+    }
+};
+
+class ConcreteCommand2 : public Command
+{
+    string arg;
+public:
+    ConcreteCommand2(const string & a) : arg(a) {}
+    void execute() override
+    {
+        cout<< "#2 process..."<<arg<<endl;
+    }
+};
+        
+        
+class MacroCommand : public Command
+{
+    vector<Command*> commands;
+public:
+    void addCommand(Command *c) { commands.push_back(c); }
+    void execute() override
+    {
+        for (auto &c : commands)
+        {
+            c->execute();
+        }
+    }
+};
+        
+int main()
+{
+
+    ConcreteCommand1 command1(receiver, "Arg ###");
+    ConcreteCommand2 command2(receiver, "Arg $$$");
+    
+    MacroCommand macro;
+    macro.addCommand(&command1);
+    macro.addCommand(&command2);
+    
+    macro.execute();
+}
+```
+
+## Command模式 要点总结
+
+- Command模式的根本目的在于将“行为请求者”与“行为实现者”解耦，在面向对象语言中，常见的实现手段是**将行为抽象为对象**。
+
+- 实现Command接口的具体命令对象ConcreteCommand有时候根据需要可能会保存一些额外的状态信息。通过使用Composite模式，可以将多个“命令”封装为一个“复合命令”MacroCommand。
+
+- Command模式与C++中的函数对象有些类似。但二者定义行为接口的规范有所区别：Command以面向对象中的“接口-实现”来定义行为接口规范，更严格，但有性能损失；C++函数对象以函数签名来定义行为接口规范，更灵活，性能更高。(因此在C++中，大部分命令模式被仿函数代替)
