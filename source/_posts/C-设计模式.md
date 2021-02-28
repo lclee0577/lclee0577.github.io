@@ -950,3 +950,193 @@ int main(){
 - 备忘录（Memento）存储原发器（Originator）对象的内部状态，在需要时恢复原发器状态。
 - Memento模式的核心是信息隐藏，即Originator需要向外接隐藏信息，保持其封装性。但同时又需要将状态保持到外界（Memento）。（类似于对对象的深拷贝）
 - 由于现代语言运行时（C#、Java等）都具有相当的对象序列化支持，因此往往采用效率较高、又较容易正确实现的序列化方案来实现Memento模式。（对于有层层指针的类型一般使用序列化的方式，当年受制于变成语言的发展，现代编程语言实现备忘录模式已经有多种方法）
+
+# P20. 组合模式
+
+- 属于数据结构模式
+
+- 软件在某些情况下，客户代码过多依赖于对象容器复杂的内部实现结构，对象容器内部实现结构（而非抽象接口）的变化将引起客户代码的频繁变化，带来了代码的维护性、扩展性等弊端
+
+- 如何和将“客户代码与复杂的对象容器结构”解耦？让对象容器自己来实现自身的复杂结构，从而使得客户代码就像处理简单对象一样来处理复杂的对象容器？
+
+- ​ 将对象组合成**树形结构**以表示“部分-整体”的层次结构。Composite使得用户对单个兑现和组合对象的使用具有一致性（稳定）
+
+```cpp
+
+class Component
+{
+public:
+    virtual void process() = 0;
+    virtual ~Component(){}
+};
+
+//树节点
+class Composite : public Component{
+    
+    string name;
+    list<Component*> elements;
+public:
+    Composite(const string & s) : name(s) {}
+    
+    void add(Component* element) {
+        elements.push_back(element);
+    }
+    void remove(Component* element){
+        elements.remove(element);
+    }
+    
+    void process(){
+        //1. process current node
+        
+        //2. process leaf nodes
+        for (auto &e : elements)
+            e->process(); //多态调用
+    }
+};
+
+//叶子节点
+class Leaf : public Component{
+    string name;
+public:
+    Leaf(string s) : name(s) {}
+            
+    void process(){
+        //process current node
+    }
+};
+
+
+void Invoke(Component & c){
+    //...
+    c.process();
+    //...
+}
+
+
+int main()
+{
+
+    Composite root("root");
+    Composite treeNode1("treeNode1");
+    Composite treeNode2("treeNode2");
+    Composite treeNode3("treeNode3");
+    Composite treeNode4("treeNode4");
+    Leaf leat1("left1");
+    Leaf leat2("left2");
+    
+    root.add(&treeNode1);
+    treeNode1.add(&treeNode2);
+    treeNode2.add(&leaf1);
+    
+    root.add(&treeNode3);
+    treeNode3.add(&treeNode4);
+    treeNode4.add(&leaf2);
+    
+    process(root);//处理根、树、叶都是同样的接口，使用多态的递归调用
+    process(leaf2);
+    process(treeNode3);
+  
+}
+```
+
+## Composite要点总结
+
+- Composite模式采用属性结构来实现普遍存在的对象容器，从而将“一对多”的关系转换为“一对一”的关系，使得客户代码可以一直地（复用）处理对象和对象容器，无需关心处理的是单个还是组合的对象容器。
+
+- 将“客户代码与复杂的对象容器结构”解耦是Composite的核心思想，解耦之后，客户代码将与纯粹的抽象接口——而非对象容器的内部实现结构——发生依赖，从而更能“应对变化”。
+
+- Composite模式在具体视线中，可以让父对象中的子对象反向追溯；如果父对象有频繁的遍历需求，可使用缓存技巧来改善效率。
+
+# P21. 迭代器
+
+- 属于数据结构模式
+
+- 在软件构建过程中，集合对象内部结构常常变化各异。但对于这些集合对象，我们希望在不暴露其内部结构的同时，可以让外部客户代码透明访问其中包含的元素；同时这种“透明遍历”也为“同一种算法在多种集合对象上进行操作”提供了可能。
+
+- 使用面向对象技术奖这种遍历机制抽象为“迭代器对象”为“应对变化中的集合对象”提供了一种优雅的方式。
+
+- 模式定义: 提供一种方法顺序访问一个聚合对象中的各个元素，而又不暴露（稳定）该对象的内部表示。
+
+```cpp
+template<typename T>
+class Iterator
+{
+public:
+    virtual void first() = 0;
+    virtual void next() = 0;
+    virtual bool isDone() const = 0;
+    virtual T& current() = 0;
+};
+
+template<typename T>
+class MyCollection{
+public:
+    Iterator<T> GetIterator(){
+        //...
+    }
+    
+};
+
+template<typename T>
+class CollectionIterator : public Iterator<T>{
+    MyCollection<T> mc;
+public:
+    
+    CollectionIterator(const MyCollection<T> & c): mc(c){ }
+    
+    void first() override {
+        
+    }
+    void next() override {
+        
+    }
+    bool isDone() const override{
+        
+    }
+    T& current() override{
+        
+    }
+};
+
+void MyAlgorithm()
+{
+    MyCollection<int> mc;
+    
+    Iterator<int> iter= mc.GetIterator();
+    
+    for (iter.first(); !iter.isDone(); iter.next()){
+        cout << iter.current() << endl;
+    }
+    
+}
+```
+
+## Iterator 模式总结
+
+- 迭代抽象：访问一个聚合对象的内容而无需暴露它的内部表示。
+
+- 迭代多态：为遍历不同的集合结构提供一个统一的接口，从而支持同样的算法在不同的集合结构上进行操作。
+
+- 迭代器的健壮性考虑：遍历的同时更改迭代器所在的集合结构，会导致问题。（许多迭代器要求是只读的）
+
+- 上述为面向对象的迭代器，现在推荐使用泛型编程的迭代器（编译时确定，而不是运行时的调用），没有虚函数的调用的开销
+
+# P22. 职责链
+
+- 属于数据结构模式
+
+- 在软件构建过程中，一个请求可能被多个对象处理，但是每个请求运行时只能有一个接受者，如果显式指定，将必不可少地带来请求发送者与接受者的紧耦合。
+
+- 如何使请求的发送者不需要指定具体的接受者？让请求的接受者自己在运行时决定来处理请求，从而使二者解耦。
+
+- 模式定义：使多个对象都有机会处理请求，从而避免请求的发送者和接收者之间的耦合关系。将这些对象连成一条链，并沿着这条链传递请求，直到有一个对象处理它为止
+
+## chain of Responsibility 要点总结
+
+- COR模式的应用场合在于“一个请求可能有多个接受者，但是最后真正的接受者只有一个”，这时候请求发送者与接受者的耦合有可能出现“变化脆弱”的症状，职责链的目的就是将二者解耦，从而更好地应对变化。
+
+- 应用了COR模式后，对象的职责分派将更具灵活性。我们可以在运行时动态添加/修改请求的处理职责。
+
+- 如果请求传递到职责链的末尾仍得不到处理，应该有一个合理的缺省机制。这也是每个接受对象的责任，而不是发出请求的对象的责任。
+
+- 随着数据结构的发展，现在这个模式更像是一种数据结构（不怎么流行）
