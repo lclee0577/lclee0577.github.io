@@ -1305,3 +1305,193 @@ int main()
 - 所谓双重分发即Visitor模式中间包括了两个多态分发（注意其中的多态机制）：第一个为accept方法的多态辨析；第二个为visitElementX方法的多态辨析。
 
 - Visitor模式的最大缺点在于扩展类层次结构（增添新的Element子类），会导致Visitor类的改变。因此Visitor模式适用于“Element类**层次结构稳定**，而其中的**操作却经常面临频繁改动**”。
+
+# P25. 解析器
+
+- 属于领域规则模式
+
+- 在软件构建过程中，如果某一特定领域的问题比较复杂，类似的结构不断重复出现，如果使用普通的编程方式来实现将面临非常频繁的变化。
+
+- 在这种情况下，将特定领域的问题表达为某种语法规则下的句子，然后构建一个解释器来解释这样的句子，从而达到解决问题的目的。
+
+- 模式定义： 给定一个语言，定义它的文法的一种表示，并定义一种解释器，这个解释器使用该表示来解释语言中的句子。
+
+```cpp
+class Expression {
+public:
+    virtual int interpreter(map<char, int> var)=0;
+    virtual ~Expression(){}
+};
+
+//变量表达式
+class VarExpression: public Expression {
+    
+    char key;
+    
+public:
+    VarExpression(const char& key)
+    {
+        this->key = key;
+    }
+    
+    int interpreter(map<char, int> var) override {
+        return var[key];
+    }
+    
+};
+
+//符号表达式
+class SymbolExpression : public Expression {
+    
+    // 运算符左右两个参数
+protected:
+    Expression* left;
+    Expression* right;
+    
+public:
+    SymbolExpression( Expression* left,  Expression* right):
+        left(left),right(right){
+    }
+    
+};
+
+//加法运算
+class AddExpression : public SymbolExpression {
+    
+public:
+    AddExpression(Expression* left, Expression* right):
+        SymbolExpression(left,right){
+        
+    }
+    int interpreter(map<char, int> var) override {
+        return left->interpreter(var) + right->interpreter(var);
+    }
+    
+};
+
+//减法运算
+class SubExpression : public SymbolExpression {
+    
+public:
+    SubExpression(Expression* left, Expression* right):
+        SymbolExpression(left,right){
+        
+    }
+    int interpreter(map<char, int> var) override {
+        return left->interpreter(var) - right->interpreter(var);
+    }
+    
+};
+
+Expression*  analyse(string expStr) {
+    
+    stack<Expression*> expStack;
+    Expression* left = nullptr;
+    Expression* right = nullptr;
+    for(int i=0; i<expStr.size(); i++)
+    {
+        switch(expStr[i])
+        {
+            case '+':
+                // 加法运算
+                left = expStack.top();
+                right = new VarExpression(expStr[++i]);
+                expStack.push(new AddExpression(left, right));
+                break;
+            case '-':
+                // 减法运算
+                left = expStack.top();
+                right = new VarExpression(expStr[++i]);
+                expStack.push(new SubExpression(left, right));
+                break;
+            default:
+                // 变量表达式
+                expStack.push(new VarExpression(expStr[i]));
+        }
+    }
+   
+    Expression* expression = expStack.top();
+
+    return expression;
+}
+
+void release(Expression* expression){
+    
+    //释放表达式树的节点内存...
+}
+
+int main(int argc, const char * argv[]) {
+    
+    
+    string expStr = "a+b-c+d-e";
+    map<char, int> var;
+    var.insert(make_pair('a',5));
+    var.insert(make_pair('b',2));
+    var.insert(make_pair('c',1));
+    var.insert(make_pair('d',6));
+    var.insert(make_pair('e',10));
+
+    
+    Expression* expression= analyse(expStr);
+    
+    int result=expression->interpreter(var);
+    
+    cout<<result<<endl;
+    
+    release(expression);
+    
+    return 0;
+}
+
+```
+
+## Interpreter 要点总结
+
+- Interpreter模式的应用场合是Interpreter模式应用中的难点，只有满足“业务规则频繁变化，且类似的结构不断重复出现，并且容易抽象为语法规则的问题”才适合使用此模式
+
+- 使用此模式来表示文法规则，从而可以使用面向对象技巧来方便地“扩展”文法
+
+- 此模式比较适合**简单的文法表示**，对于复杂的文法表示，此模式会产生比较大的类层次结构，需要求助于语法分析生成器这样的标准工具。
+
+# P26. 设计模式总结
+
+- 管理变化，提高复用
+
+- 两种手段：分解和抽象
+
+- 从封装变化角度分类
+  - 组件协作：模板方法、策略模式、观察者
+  - 单一职责：装饰器、桥模式
+  - 对象创建：工厂模式、抽象工厂、原型模式、建造者模式（不常用）
+  - 对象性能：单体模式、享元模式
+  - 接口隔离：门面模式、代理模式、中介者模式（不常用）、适配器模式
+  - 状态变化：备忘录模式、状态模式
+  - 数据结构：组合模式、迭代器模式（不常用），职责链（不常用）
+  - 领域问题：解析器模式（不常用）
+
+- 大部分设计模式的类结构都是A类内有一个指向B类的指针（B应该是基类，以此实现多态调用，实现松耦合）
+
+## 什么时候不用设计模式
+
+- 代码可读性很差时
+- 需求理解还很浅时
+- 变化没有显现时
+- 不是系统的关键依赖点
+- 项目没有复用价值时
+- 项目将要发布时
+
+## 经验之谈
+
+- 不要为模式而模式
+- 关注抽象类 & 接口
+- 理清变化点和稳定点
+- 审视依赖关系
+- 要求Framework 和 Application 的区隔思维
+- 良好的设计是演化的结果
+
+## 设计模式成长之路
+
+“手中无剑，心中无剑” ： 见模式而不知
+“手中有剑，心中无剑” ：可以识别模式，作为应用开发人员模式
+“手中有剑，心中有剑” ： 作为框架开发人员为应用设计某些模式
+“手中无剑，心中有剑” ： 忘掉模式，只有原则
