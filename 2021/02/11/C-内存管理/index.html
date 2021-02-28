@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="P1. overview 第一讲 primitives 基础工具 第二讲 malloc&#x2F;free 第三讲 std::allocator 第四讲 other allocator 第五讲 loki::allocator  P2. 内存分配的每一层面 C++ Application  C++ Library std::allocator  C++ primitives new,new[], new(),">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++内存管理">
+<meta property="og:url" content="http://yoursite.com/2021/02/11/C-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/index.html">
+<meta property="og:site_name" content="Blog-lclee">
+<meta property="og:description" content="P1. overview 第一讲 primitives 基础工具 第二讲 malloc&#x2F;free 第三讲 std::allocator 第四讲 other allocator 第五讲 loki::allocator  P2. 内存分配的每一层面 C++ Application  C++ Library std::allocator  C++ primitives new,new[], new(),">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-02-11T05:02:58.000Z">
+<meta property="article:modified_time" content="2021-02-26T10:49:51.355Z">
+<meta property="article:author" content="lclee">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/2021/02/11/C-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>C++内存管理 | Blog-lclee</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Blog-lclee</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/02/11/C-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="lclee">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog-lclee">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C++内存管理
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2021-02-11 13:02:58" itemprop="dateCreated datePublished" datetime="2021-02-11T13:02:58+08:00">2021-02-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-02-26 18:49:51" itemprop="dateModified" datetime="2021-02-26T18:49:51+08:00">2021-02-26</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="P1-overview"><a href="#P1-overview" class="headerlink" title="P1. overview"></a>P1. overview</h1><ul>
+<li>第一讲 primitives 基础工具</li>
+<li>第二讲 malloc/free</li>
+<li>第三讲 std::allocator</li>
+<li>第四讲 other allocator</li>
+<li>第五讲 loki::allocator</li>
+</ul>
+<h1 id="P2-内存分配的每一层面"><a href="#P2-内存分配的每一层面" class="headerlink" title="P2. 内存分配的每一层面"></a>P2. 内存分配的每一层面</h1><ol>
+<li><p>C++ Application</p>
+</li>
+<li><p>C++ Library std::allocator</p>
+</li>
+<li><p>C++ primitives new,new[], new(),::operator new()</p>
+</li>
+<li><p>CRT malloc/free</p>
+</li>
+<li><p>OS.API  HeapAlloc, VirtualAlloc</p>
+</li>
+</ol>
+<ul>
+<li>编程一般操作1-4，若调用系统API就跟系统绑定在一起，不具备移植性</li>
+</ul>
+<h1 id="P3-四个层面基本用法"><a href="#P3-四个层面基本用法" class="headerlink" title="P3.四个层面基本用法"></a>P3.四个层面基本用法</h1><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>分配</th>
+<th>释放</th>
+<th>属类</th>
+<th>可否重载</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td> malloc()</td>
+<td>free()</td>
+<td>C函数</td>
+<td>不可</td>
+</tr>
+<tr>
+<td> new</td>
+<td>delete</td>
+<td>C++表达式</td>
+<td>不可</td>
+</tr>
+<tr>
+<td> ::operator new()</td>
+<td>operator delete()</td>
+<td>C++函数</td>
+<td>可</td>
+</tr>
+<tr>
+<td> allocator\<T>::allocate()</T></td>
+<td>allocator\<T>::deallocate()</T></td>
+<td>C++标准库</td>
+<td>可自由设计并搭配容器</td>
+</tr>
+</tbody>
+</table>
+</div>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span>* p1 = <span class="built_in">malloc</span>(<span class="number">512</span>);<span class="comment">//512 bytes</span></span><br><span class="line"><span class="built_in">free</span>(p1);</span><br><span class="line"></span><br><span class="line"><span class="built_in">complex</span>&lt;<span class="keyword">int</span>&gt;* p2 <span class="keyword">new</span> <span class="built_in">complex</span>&lt;<span class="keyword">int</span>&gt;;</span><br><span class="line"><span class="keyword">delete</span> P2</span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span> p3 :: <span class="function"><span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="number">512</span>)</span></span>;<span class="comment">//512 bytes</span></span><br><span class="line">::<span class="function"><span class="keyword">operator</span> <span class="title">delete</span><span class="params">(p3)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span>* p4 = allocator&lt;<span class="keyword">int</span>&gt;().allocate(<span class="number">7</span>);<span class="comment">// 分配7个int</span></span><br><span class="line">allocator&lt;<span class="keyword">int</span>&gt;().deallocate((<span class="keyword">int</span>*)p4,<span class="number">7</span>)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h1 id="P4-基本构建一-new-delete-expression-上"><a href="#P4-基本构建一-new-delete-expression-上" class="headerlink" title="P4. 基本构建一 new delete expression 上"></a>P4. 基本构建一 new delete expression 上</h1><p><code>Complex* pc = new Complex(1,2);</code> 会被编译器转为以下程序</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Complex *pc;</span><br><span class="line"><span class="keyword">try</span>&#123;</span><br><span class="line">    <span class="keyword">void</span> *mem = <span class="keyword">operator</span> <span class="keyword">new</span>(<span class="keyword">sizeof</span>(Complex));</span><br><span class="line">    pc = <span class="keyword">static_cast</span>&lt;Complex*&gt;(mem);</span><br><span class="line">    pc-&gt;Complex::Complex(<span class="number">1</span>,<span class="number">2</span>);<span class="comment">//只有编译器可以这样直接调用ctor</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">catch</span>(<span class="built_in">std</span>::bad_alloc)&#123;&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>operator new() 可以被重载，实现自定义的内存管理</p>
+</li>
+<li><p>默认的 operator new() 中调用 <code>malloc</code> 申请内存，若申请失败会调用 <code>cllnewh</code> ，这个函数用户可以用来定义一些可以释放的变量，以便进行申请内存。</p>
+</li>
+<li><p>直接调用ctor 要用placement new <code>new(p) Complex(1,2);</code></p>
+</li>
+</ul>
+<h1 id="P5-基本构建一-new-delete-expression-中"><a href="#P5-基本构建一-new-delete-expression-中" class="headerlink" title="P5. 基本构建一 new delete expression 中"></a>P5. 基本构建一 new delete expression 中</h1><ul>
+<li>delete 被编译器转为 析构函数和 operator delete，operator delete内部调用free</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">Complex* pc <span class="keyword">new</span> <span class="title">Complex</span><span class="params">(<span class="number">1</span>,<span class="number">2</span>)</span></span>;</span><br><span class="line">...</span><br><span class="line"><span class="keyword">delete</span> pc;</span><br></pre></td></tr></table></figure>
+<p>被编译器转为下面</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">pc-&gt;~Complex();</span><br><span class="line"><span class="function"><span class="keyword">operator</span> <span class="title">delete</span><span class="params">(pc)</span></span>;<span class="comment">//内部调用free</span></span><br></pre></td></tr></table></figure>
+<p>我们不能直接调用构造函数，但是可以直接调用析构函数。</p>
+<h1 id="P6-基本构建一-new-delete-expression-下"><a href="#P6-基本构建一-new-delete-expression-下" class="headerlink" title="P6. 基本构建一 new delete expression 下"></a>P6. 基本构建一 new delete expression 下</h1><ul>
+<li>测试 无法直接调用ctor</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">A* pA = <span class="keyword">new</span> A(<span class="number">1</span>);         <span class="comment">//ctor. this=000307A8 id=1</span></span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; pA-&gt;id &lt;&lt; <span class="built_in">endl</span>;   <span class="comment">//1</span></span><br><span class="line"><span class="comment">//pA-&gt;A::A(3);                //in VC6 : ctor. this=000307A8 id=3</span></span><br><span class="line">                            <span class="comment">//in GCC : [Error] cannot call constructor &#x27;jj02::A::A&#x27; directly</span></span><br></pre></td></tr></table></figure>
+<h1 id="P7-Array-new"><a href="#P7-Array-new" class="headerlink" title="P7. Array new"></a>P7. Array new</h1><ul>
+<li>array new 的构造函数要有默认值，在array new 中无法赋初值</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Complex* pca = <span class="keyword">new</span> Complex[<span class="number">3</span>];<span class="comment">//构造函数要有默认值，无法借由参数给予初值</span></span><br><span class="line"><span class="keyword">delete</span>[] pca;<span class="comment">//调用三次析构函数</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>array new 需要搭配 array delete,否则只会调用一次析构函数。</p>
+</li>
+<li><p>对于不含指针的对象没有什么影响，对含有指针的对象会造成内存泄漏（只释放了一个对象申请的内存，二删除了整个数组，导致这个部分内存无法再被使用）</p>
+</li>
+<li><p>若 array new 的对象的dtor需要释放内存，则申请的内存空间中会记录对象的数目，array delete 时依次析构。</p>
+</li>
+</ul>
+<h1 id="P8-placement-new"><a href="#P8-placement-new" class="headerlink" title="P8. placement new"></a>P8. placement new</h1><ul>
+<li>placement new 定点的new，允许我们将 <code>obj</code> 构建在已经分配好的内存中,下面第二行</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">char</span>* buf = <span class="keyword">new</span> <span class="keyword">char</span>[<span class="keyword">sizeof</span>(Complex)*<span class="number">3</span>];</span><br><span class="line"><span class="function">Complex* pc <span class="title">new</span><span class="params">(buf)</span><span class="title">Complex</span><span class="params">(<span class="number">1</span>,<span class="number">2</span>)</span></span>;</span><br><span class="line">...</span><br><span class="line"><span class="keyword">delete</span>[] buf;</span><br></pre></td></tr></table></figure>
+<h1 id="P9-重载"><a href="#P9-重载" class="headerlink" title="P9. 重载"></a>P9. 重载</h1><ul>
+<li>一般的应用程序 <code>new</code> <code>-&gt; ``operator new()</code> <code>-&gt;</code> <code>::operator new()</code> 可以在类内重载 <code>Foo:: operator new()</code> 实现自定义的内存管理，一般很少去动用全局的 <code>::operator new()</code></li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Foo</span>&#123;</span></span><br><span class="line"><span class="keyword">public</span>：</span><br><span class="line">    <span class="function"><span class="keyword">void</span>* <span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="keyword">size_t</span>)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="keyword">operator</span> <span class="title">delete</span><span class="params">(<span class="keyword">void</span>* <span class="keyword">size_t</span>)</span><span class="comment">//第二参数为可选参数</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="P10-重载示例（上）"><a href="#P10-重载示例（上）" class="headerlink" title="P10. 重载示例（上）"></a>P10. 重载示例（上）</h1><ul>
+<li>operator new 需要是静态的，出于人性化考虑可以不加</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Foo</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="keyword">int</span> _id;</span><br><span class="line">  <span class="keyword">long</span> _data;</span><br><span class="line">  <span class="built_in">string</span> _str;</span><br><span class="line">  </span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span>* <span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="keyword">size_t</span> size)</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span>  <span class="keyword">operator</span> <span class="title">delete</span><span class="params">(<span class="keyword">void</span>* deadObject, <span class="keyword">size_t</span> size)</span></span>;</span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">void</span>* <span class="keyword">operator</span> <span class="keyword">new</span>[](<span class="keyword">size_t</span> size);</span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">void</span>  <span class="keyword">operator</span> <span class="keyword">delete</span>[](<span class="keyword">void</span>* deadObject, <span class="keyword">size_t</span> size);</span><br><span class="line">  </span><br><span class="line">  Foo() : _id(<span class="number">0</span>)      &#123; <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;default ctor. this=&quot;</span>  &lt;&lt; <span class="keyword">this</span> &lt;&lt; <span class="string">&quot; id=&quot;</span> &lt;&lt; _id &lt;&lt; <span class="built_in">endl</span>;  &#125;</span><br><span class="line">  Foo(<span class="keyword">int</span> i) : _id(i) &#123; <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;ctor. this=&quot;</span>  &lt;&lt; <span class="keyword">this</span> &lt;&lt; <span class="string">&quot; id=&quot;</span> &lt;&lt; _id &lt;&lt; <span class="built_in">endl</span>;  &#125;</span><br><span class="line">  <span class="comment">//virtual </span></span><br><span class="line">  ~Foo()              &#123; <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;dtor. this=&quot;</span>  &lt;&lt; <span class="keyword">this</span> &lt;&lt; <span class="string">&quot; id=&quot;</span> &lt;&lt; _id &lt;&lt; <span class="built_in">endl</span>;  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="comment">//不加 virtual dtor, sizeof = 12, new Foo[5] =&gt; operator new[]() 的 size 參數是 64, </span></span><br><span class="line">  <span class="comment">//加了 virtual dtor, sizeof = 16, new Foo[5] =&gt; operator new[]() 的 size 參數是 84, </span></span><br><span class="line">  <span class="comment">//上述二例，多出來的 4 可能就是個 size_t 欄位用來放置 array size. </span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span>* Foo::<span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="keyword">size_t</span> size)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Foo* p = (Foo*)<span class="built_in">malloc</span>(size);  </span><br><span class="line"> <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;Foo::operator new(), size=&quot;</span> &lt;&lt; size &lt;&lt; <span class="string">&quot;\t  return: &quot;</span> &lt;&lt; p &lt;&lt; <span class="built_in">endl</span>;   </span><br><span class="line"></span><br><span class="line">   <span class="keyword">return</span> p;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> Foo::<span class="keyword">operator</span> <span class="title">delete</span><span class="params">(<span class="keyword">void</span>* pdead, <span class="keyword">size_t</span> size)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"> <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;Foo::operator delete(), pdead= &quot;</span> &lt;&lt; pdead &lt;&lt; <span class="string">&quot;  size= &quot;</span> &lt;&lt; size &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"> <span class="built_in">free</span>(pdead);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="P11-重载示例-（下）"><a href="#P11-重载示例-（下）" class="headerlink" title="P11. 重载示例 （下）"></a>P11. 重载示例 （下）</h1><ul>
+<li><p><code>operator new()</code> 可以写出多个版本，需要声明独特的参数列，且第一参数必须为 <code>size_t</code>,调用的时候括号里直接写第二个参数即可(第二个代码块)</p>
+</li>
+<li><p><code>operator delete()</code> 也可以写出多个版本，但是只有相对应的 <code>operator new()</code> 构造抛出异常时，才会调用对应的 <code>delete</code></p>
+</li>
+<li><p>原则上 每个版本的 <code>operator new()</code> 都要有与之对应的 <code>operator delete()</code>,但是没有写也不会报错，表示放弃对ctor的异常处理。（有的平台没有写对应版本的delete 会有警告）</p>
+</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="class"><span class="keyword">class</span> <span class="title">Foo</span></span></span><br><span class="line"><span class="class">  &#123;</span></span><br><span class="line">  <span class="keyword">public</span>:</span><br><span class="line">    Foo() &#123; <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;Foo::Foo()&quot;</span> &lt;&lt; <span class="built_in">endl</span>; &#125;</span><br><span class="line">    Foo(<span class="keyword">int</span>)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;Foo::Foo(int)&quot;</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">      <span class="comment">// throw Bad();</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//(1) 這個就是一般的 operator new() 的重載</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> *<span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="keyword">size_t</span> size)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">      <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;operator new(size_t size), size= &quot;</span> &lt;&lt; size &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">      <span class="keyword">return</span> <span class="built_in">malloc</span>(size);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//(2) 這個就是標準庫已經提供的 placement new() 的重載 (形式)</span></span><br><span class="line">    <span class="comment">//    (所以我也模擬 standard placement new 的動作, just return ptr)</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> *<span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="keyword">size_t</span> size, <span class="keyword">void</span> *start)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">      <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;operator new(size_t size, void* start), size= &quot;</span> &lt;&lt; size &lt;&lt; <span class="string">&quot;  start= &quot;</span> &lt;&lt; start &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">      <span class="keyword">return</span> start;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//(3) 這個才是嶄新的 placement new</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> *<span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="keyword">size_t</span> size, <span class="keyword">long</span> extra)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">      <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;operator new(size_t size, long extra)  &quot;</span> &lt;&lt; size &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; extra &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">      <span class="keyword">return</span> <span class="built_in">malloc</span>(size + extra);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//(4) 這又是一個 placement new</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> *<span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="keyword">size_t</span> size, <span class="keyword">long</span> extra, <span class="keyword">char</span> init)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">      <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;operator new(size_t size, long extra, char init)  &quot;</span> &lt;&lt; size &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; extra &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; init &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">      <span class="keyword">return</span> <span class="built_in">malloc</span>(size + extra);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Foo *p1 = <span class="keyword">new</span> Foo;        <span class="comment">//op-new(size_t)</span></span><br><span class="line">Foo *p2 = <span class="keyword">new</span> (&amp;start) Foo;    <span class="comment">//op-new(size_t,void*)</span></span><br><span class="line">Foo *p3 = <span class="keyword">new</span> (<span class="number">100</span>) Foo;    <span class="comment">//op-new(size_t,long)</span></span><br><span class="line">Foo *p4 = <span class="keyword">new</span> (<span class="number">100</span>, <span class="string">&#x27;a&#x27;</span>) Foo; <span class="comment">//op-new(size_t,long,char)</span></span><br><span class="line"></span><br><span class="line">Foo *p5 = <span class="keyword">new</span> (<span class="number">100</span>) Foo(<span class="number">1</span>);     <span class="comment">//op-new(size_t,long)  op-del(void*,long)</span></span><br><span class="line">Foo *p6 = <span class="keyword">new</span> (<span class="number">100</span>, <span class="string">&#x27;a&#x27;</span>) Foo(<span class="number">1</span>); <span class="comment">//</span></span><br><span class="line">Foo *p7 = <span class="keyword">new</span> (&amp;start) Foo(<span class="number">1</span>);   <span class="comment">//</span></span><br><span class="line">Foo *p8 = <span class="keyword">new</span> Foo(<span class="number">1</span>);       <span class="comment">//</span></span><br></pre></td></tr></table></figure>
+<h1 id="P12-per-class-allocator"><a href="#P12-per-class-allocator" class="headerlink" title="P12. per-class allocator"></a>P12. per-class allocator</h1><ul>
+<li><p>当需要多次 new obj 时，可以设计接管 operator new() 一次申请一大块空间，需要时直接分配，无需每次 <code>malloc</code>。同时可以减少维护的cookie，提高内存利用率。</p>
+</li>
+<li><p>版本一：类内变量由指针和数据构成，首次获取一大块内存，用指针连城链表进行维护</p>
+</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Screen</span></span></span><br><span class="line"><span class="class"> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">   Screen(<span class="keyword">int</span> x) : i(x)&#123;&#125;;</span><br><span class="line">   <span class="function"><span class="keyword">int</span> <span class="title">get</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> i; &#125;</span><br><span class="line"></span><br><span class="line">   <span class="function"><span class="keyword">void</span> *<span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="keyword">size_t</span>)</span></span>;</span><br><span class="line">   <span class="function"><span class="keyword">void</span> <span class="keyword">operator</span> <span class="title">delete</span><span class="params">(<span class="keyword">void</span> *, <span class="keyword">size_t</span>)</span></span>; <span class="comment">//(2)</span></span><br><span class="line">   <span class="comment">//! void  operator delete(void*);      //(1) 二擇一. 若(1)(2)並存,會有很奇怪的報錯 (摸不著頭緒)</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">   Screen *next;</span><br><span class="line">   <span class="keyword">static</span> Screen *freeStore;</span><br><span class="line">   <span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">int</span> screenChunk;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">   <span class="keyword">int</span> i;</span><br><span class="line"> &#125;;</span><br><span class="line"> Screen *Screen::freeStore = <span class="number">0</span>;</span><br><span class="line"> <span class="keyword">const</span> <span class="keyword">int</span> Screen::screenChunk = <span class="number">24</span>;</span><br><span class="line"></span><br><span class="line"> <span class="function"><span class="keyword">void</span> *Screen::<span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="keyword">size_t</span> size)</span></span></span><br><span class="line"><span class="function"> </span>&#123;</span><br><span class="line">   Screen *p;</span><br><span class="line">   <span class="keyword">if</span> (!freeStore)</span><br><span class="line">   &#123;</span><br><span class="line">     <span class="comment">//linked list 是空的，所以攫取一大塊 memory</span></span><br><span class="line">     <span class="comment">//以下呼叫的是 global operator new</span></span><br><span class="line">     <span class="keyword">size_t</span> chunk = screenChunk * size;</span><br><span class="line">     freeStore = p =</span><br><span class="line">       <span class="keyword">reinterpret_cast</span>&lt;Screen *&gt;(<span class="keyword">new</span> <span class="keyword">char</span>[chunk]);</span><br><span class="line">     <span class="comment">//將分配得來的一大塊 memory 當做 linked list 般小塊小塊串接起來</span></span><br><span class="line">     <span class="keyword">for</span> (; p != &amp;freeStore[screenChunk - <span class="number">1</span>]; ++p)</span><br><span class="line">       p-&gt;next = p + <span class="number">1</span>;</span><br><span class="line">     p-&gt;next = <span class="number">0</span>;</span><br><span class="line">   &#125;</span><br><span class="line">   p = freeStore;</span><br><span class="line">   freeStore = freeStore-&gt;next;</span><br><span class="line">   <span class="keyword">return</span> p;</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> <span class="comment">//! void Screen::operator delete(void *p)    //(1)</span></span><br><span class="line"> <span class="function"><span class="keyword">void</span> Screen::<span class="keyword">operator</span> <span class="title">delete</span><span class="params">(<span class="keyword">void</span> *p, <span class="keyword">size_t</span>)</span> <span class="comment">//(2)二擇一</span></span></span><br><span class="line"><span class="function"> </span>&#123;</span><br><span class="line">   <span class="comment">//將 deleted object 收回插入 free list 前端</span></span><br><span class="line"> (<span class="keyword">static_cast</span>&lt;Screen *&gt;(p))-&gt;next = freeStore;</span><br><span class="line">   freeStore = <span class="keyword">static_cast</span>&lt;Screen *&gt;(p);</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">   <span class="comment">//! void Screen::operator delete(void *p)    //(1)</span></span><br><span class="line"> <span class="function"><span class="keyword">void</span> Screen::<span class="keyword">operator</span> <span class="title">delete</span><span class="params">(<span class="keyword">void</span> *p, <span class="keyword">size_t</span>)</span> <span class="comment">//(2)二擇一</span></span></span><br><span class="line"><span class="function"> </span>&#123;</span><br><span class="line">   <span class="comment">//將 deleted object 收回插入 free list 前端</span></span><br><span class="line">   (<span class="keyword">static_cast</span>&lt;Screen *&gt;(p))-&gt;next = freeStore;</span><br><span class="line">   freeStore = <span class="keyword">static_cast</span>&lt;Screen *&gt;(p);</span><br><span class="line"> &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h1 id="P13-per-class-allocator-2"><a href="#P13-per-class-allocator-2" class="headerlink" title="P13. per-class allocator 2"></a>P13. per-class allocator 2</h1><ul>
+<li><p>使用 <code>struct</code> 包装所有数据（第 <code>7</code> 行），使用 <code>union</code> 将数据和指针进行联合（<code>14</code>行），这种设计成为嵌入式指针</p>
+</li>
+<li><p>初始化后，未使用数据用指针相连形成链表</p>
+</li>
+<li><p>相较于上个版本，使用 <code>union</code> 联合，除去维护用的指针（未被使用的内存用指针串联，需要分配对象的内存用户会声明指针变量，因此数据和指针不会同时存在可用 <code>union</code>节省内存空间）</p>
+</li>
+<li><p>第 <code>44</code> 行 判断是否发生继承</p>
+</li>
+<li><p>这个版本的缺陷在于 <code>operator delete()</code> 中 没有 <code>free</code>，（程序 new 100000 个 obj，用完之后delete，但是没有将内存还给操作系统）</p>
+</li>
+</ul>
+<figure class="highlight cpp"><figcaption><span>&#123;.line-numbers&#125;</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//ref. Effective C++ 2e, item10</span></span><br><span class="line"><span class="comment">//per-class allocator</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Airplane</span></span></span><br><span class="line"><span class="class">&#123;</span> <span class="comment">//支援 customized memory management</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">AirplaneRep</span></span></span><br><span class="line"><span class="class">  &#123;</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> miles;</span><br><span class="line">    <span class="keyword">char</span> type;</span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">  <span class="class"><span class="keyword">union</span></span></span><br><span class="line"><span class="class">  &#123;</span></span><br><span class="line">    AirplaneRep rep; <span class="comment">//此針對 used object</span></span><br><span class="line">    Airplane *next;   <span class="comment">//此針對 free list</span></span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="function"><span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="title">getMiles</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> rep.miles; &#125;</span><br><span class="line">  <span class="function"><span class="keyword">char</span> <span class="title">getType</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> rep.type; &#125;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">set</span><span class="params">(<span class="keyword">unsigned</span> <span class="keyword">long</span> m, <span class="keyword">char</span> t)</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    rep.miles = m;</span><br><span class="line">    rep.type = t;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> *<span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="keyword">size_t</span> size)</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="keyword">operator</span> <span class="title">delete</span><span class="params">(<span class="keyword">void</span> *deadObject, <span class="keyword">size_t</span> size)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">int</span> BLOCK_SIZE;</span><br><span class="line">  <span class="keyword">static</span> Airplane *headOfFreeList;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">Airplane *Airplane::headOfFreeList;</span><br><span class="line"><span class="keyword">const</span> <span class="keyword">int</span> Airplane::BLOCK_SIZE = <span class="number">512</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> *Airplane::<span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="keyword">size_t</span> size)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="comment">//如果大小錯誤，轉交給 ::operator new()</span></span><br><span class="line">  <span class="keyword">if</span> (size != <span class="keyword">sizeof</span>(Airplane))</span><br><span class="line">    <span class="keyword">return</span> ::<span class="keyword">operator</span> <span class="keyword">new</span>(size);</span><br><span class="line"></span><br><span class="line">  Airplane *p = headOfFreeList;</span><br><span class="line"></span><br><span class="line">  <span class="comment">//如果 p 有效，就把list頭部移往下一個元素</span></span><br><span class="line">  <span class="keyword">if</span> (p)</span><br><span class="line">    headOfFreeList = p-&gt;next;</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="comment">//free list 已空。配置一塊夠大記憶體，</span></span><br><span class="line">    <span class="comment">//令足夠容納 BLOCK_SIZE 個 Airplanes</span></span><br><span class="line">    Airplane *newBlock = <span class="keyword">static_cast</span>&lt;Airplane *&gt;(::<span class="keyword">operator</span> <span class="keyword">new</span>(BLOCK_SIZE * <span class="keyword">sizeof</span>(Airplane)));</span><br><span class="line">    <span class="comment">//組成一個新的 free list：將小區塊串在一起，但跳過</span></span><br><span class="line">    <span class="comment">//#0 元素，因為要將它傳回給呼叫者。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; BLOCK_SIZE - <span class="number">1</span>; ++i)</span><br><span class="line">      newBlock[i].next = &amp;newBlock[i + <span class="number">1</span>];</span><br><span class="line">    newBlock[BLOCK_SIZE - <span class="number">1</span>].next = <span class="number">0</span>; <span class="comment">//以null結束</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 將 p 設至頭部，將 headOfFreeList 設至</span></span><br><span class="line">    <span class="comment">// 下一個可被運用的小區塊。</span></span><br><span class="line">    p = newBlock;</span><br><span class="line">    headOfFreeList = &amp;newBlock[<span class="number">1</span>];</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> p;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// operator delete 接獲一塊記憶體。</span></span><br><span class="line"><span class="comment">// 如果它的大小正確，就把它加到 free list 的前端</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> Airplane::<span class="keyword">operator</span> <span class="title">delete</span><span class="params">(<span class="keyword">void</span> *deadObject,</span></span></span><br><span class="line"><span class="function"><span class="params">                 <span class="keyword">size_t</span> size)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (deadObject == <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  <span class="keyword">if</span> (size != <span class="keyword">sizeof</span>(Airplane))</span><br><span class="line">  &#123;</span><br><span class="line">    ::<span class="function"><span class="keyword">operator</span> <span class="title">delete</span><span class="params">(deadObject)</span></span>;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  Airplane *carcass =</span><br><span class="line">    <span class="keyword">static_cast</span>&lt;Airplane *&gt;(deadObject);</span><br><span class="line"></span><br><span class="line">  carcass-&gt;next = headOfFreeList;</span><br><span class="line">  headOfFreeList = carcass;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="P14-static-allocator"><a href="#P14-static-allocator" class="headerlink" title="P14. static allocator"></a>P14. static allocator</h1><ul>
+<li>可以为每个需要的类写之内存管理，但是每个类都会有大量重复的代码，因此可以将这种操作独立出来写一个类</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">allocator</span></span></span><br><span class="line"><span class="class">  &#123;</span></span><br><span class="line">  <span class="keyword">private</span>:</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">obj</span></span></span><br><span class="line"><span class="class">    &#123;</span></span><br><span class="line">      <span class="class"><span class="keyword">struct</span> <span class="title">obj</span> *<span class="title">next</span>;</span> <span class="comment">//embedded pointer</span></span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">void</span> *<span class="title">allocate</span><span class="params">(<span class="keyword">size_t</span>)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">deallocate</span><span class="params">(<span class="keyword">void</span> *, <span class="keyword">size_t</span>)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">check</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span>:</span><br><span class="line">    obj *freeStore = <span class="literal">nullptr</span>;</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">int</span> CHUNK = <span class="number">5</span>; <span class="comment">//小一點方便觀察</span></span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> *<span class="title">allocator::allocate</span><span class="params">(<span class="keyword">size_t</span> size)</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    obj *p;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!freeStore)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="comment">//linked list 是空的，所以攫取一大塊 memory</span></span><br><span class="line">      <span class="keyword">size_t</span> chunk = CHUNK * size;</span><br><span class="line">      freeStore = p = (obj *)<span class="built_in">malloc</span>(chunk);</span><br><span class="line"></span><br><span class="line">      <span class="comment">//cout &lt;&lt; &quot;empty. malloc: &quot; &lt;&lt; chunk &lt;&lt; &quot;  &quot; &lt;&lt; p &lt;&lt; endl;</span></span><br><span class="line"></span><br><span class="line">      <span class="comment">//將分配得來的一大塊當做 linked list 般小塊小塊串接起來</span></span><br><span class="line">      <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; (CHUNK - <span class="number">1</span>); ++i)</span><br><span class="line">      &#123; <span class="comment">//沒寫很漂亮, 不是重點無所謂.</span></span><br><span class="line">        p-&gt;next = (obj *)((<span class="keyword">char</span> *)p + size);</span><br><span class="line">        p = p-&gt;next;</span><br><span class="line">      &#125;</span><br><span class="line">      p-&gt;next = <span class="literal">nullptr</span>; <span class="comment">//last</span></span><br><span class="line">    &#125;</span><br><span class="line">    p = freeStore;</span><br><span class="line">    freeStore = freeStore-&gt;next;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//cout &lt;&lt; &quot;p= &quot; &lt;&lt; p &lt;&lt; &quot;  freeStore= &quot; &lt;&lt; freeStore &lt;&lt; endl;</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> p;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">allocator::deallocate</span><span class="params">(<span class="keyword">void</span> *p, <span class="keyword">size_t</span>)</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    <span class="comment">//將 deleted object 收回插入 free list 前端</span></span><br><span class="line">    ((obj *)p)-&gt;next = freeStore;</span><br><span class="line">    freeStore = (obj *)p;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">allocator::check</span><span class="params">()</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    obj *p = freeStore;</span><br><span class="line">    <span class="keyword">int</span> count = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (p)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">cout</span> &lt;&lt; p &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">      p = p-&gt;next;</span><br><span class="line">      count++;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; count &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">//--------------</span></span><br><span class="line"></span><br><span class="line">  <span class="class"><span class="keyword">class</span> <span class="title">Foo</span></span></span><br><span class="line"><span class="class">  &#123;</span></span><br><span class="line">  <span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">long</span> L;</span><br><span class="line">    <span class="built_in">string</span> str;</span><br><span class="line">    <span class="keyword">static</span> allocator myAlloc;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span>:</span><br><span class="line">    Foo(<span class="keyword">long</span> l) : L(l) &#123;&#125;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> *<span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="keyword">size_t</span> size)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> myAlloc.allocate(size);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="keyword">operator</span> <span class="title">delete</span><span class="params">(<span class="keyword">void</span> *pdead, <span class="keyword">size_t</span> size)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> myAlloc.deallocate(pdead, size);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;;</span><br><span class="line">  allocator Foo::myAlloc;</span><br><span class="line"></span><br><span class="line">  <span class="class"><span class="keyword">class</span> <span class="title">Goo</span></span></span><br><span class="line"><span class="class">  &#123;</span></span><br><span class="line">  <span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">complex</span>&lt;<span class="keyword">double</span>&gt; c;</span><br><span class="line">    <span class="built_in">string</span> str;</span><br><span class="line">    <span class="keyword">static</span> allocator myAlloc;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span>:</span><br><span class="line">    Goo(<span class="keyword">const</span> <span class="built_in">complex</span>&lt;<span class="keyword">double</span>&gt; &amp;x) : c(x) &#123;&#125;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> *<span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="keyword">size_t</span> size)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> myAlloc.allocate(size);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="keyword">operator</span> <span class="title">delete</span><span class="params">(<span class="keyword">void</span> *pdead, <span class="keyword">size_t</span> size)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> myAlloc.deallocate(pdead, size);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;;</span><br><span class="line">  allocator Goo::myAlloc;</span><br><span class="line"></span><br><span class="line">  <span class="comment">//-------------</span></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">test_static_allocator_3</span><span class="params">()</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;\n\n\ntest_static_allocator().......... \n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    &#123;</span><br><span class="line">      Foo *p[<span class="number">100</span>];</span><br><span class="line"></span><br><span class="line">      <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;sizeof(Foo)= &quot;</span> &lt;&lt; <span class="keyword">sizeof</span>(Foo) &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">      <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">23</span>; ++i)</span><br><span class="line">      &#123; <span class="comment">//23,任意數, 隨意看看結果</span></span><br><span class="line">        p[i] = <span class="keyword">new</span> Foo(i);</span><br><span class="line">        <span class="built_in">cout</span> &lt;&lt; p[i] &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; p[i]-&gt;L &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">//Foo::myAlloc.check();</span></span><br><span class="line"></span><br><span class="line">      <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">23</span>; ++i)</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="keyword">delete</span> p[i];</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">//Foo::myAlloc.check();</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#123;</span><br><span class="line">      Goo *p[<span class="number">100</span>];</span><br><span class="line"></span><br><span class="line">      <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;sizeof(Goo)= &quot;</span> &lt;&lt; <span class="keyword">sizeof</span>(Goo) &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">      <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">17</span>; ++i)</span><br><span class="line">      &#123; <span class="comment">//17,任意數, 隨意看看結果</span></span><br><span class="line">        p[i] = <span class="keyword">new</span> Goo(<span class="built_in">complex</span>&lt;<span class="keyword">double</span>&gt;(i, i));</span><br><span class="line">        <span class="built_in">cout</span> &lt;&lt; p[i] &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; p[i]-&gt;c &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">//Goo::myAlloc.check();</span></span><br><span class="line"></span><br><span class="line">      <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">17</span>; ++i)</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="keyword">delete</span> p[i];</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">//Goo::myAlloc.check();</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>相较于之前的设计，这里application classes 与内存不再纠缠不清，所有与内存相关的细节都让<code>allocator</code>去操作。</p>
+</li>
+<li><p>这样无需为每个类单独设计内存管理，这里的内存管理是类内的一个静态变量</p>
+</li>
+</ul>
+<h1 id="P15-macro-for-static-allocator"><a href="#P15-macro-for-static-allocator" class="headerlink" title="P15. macro for static allocator"></a>P15. macro for static allocator</h1><ul>
+<li>每个类中都有很多相同的部分，因此用宏展开，代码更为简洁</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//借鏡 MFC macros.</span></span><br><span class="line"><span class="comment">// DECLARE_POOL_ALLOC -- used in class definition</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> DECLARE_POOL_ALLOC()                                           \</span></span><br><span class="line"><span class="keyword">public</span>:                                                                \</span><br><span class="line">  <span class="function"><span class="keyword">void</span> *<span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="keyword">size_t</span> size)</span> </span>&#123; <span class="keyword">return</span> myAlloc.allocate(size); &#125; \</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="keyword">operator</span> <span class="title">delete</span><span class="params">(<span class="keyword">void</span> *p)</span> </span>&#123; myAlloc.deallocate(p, <span class="number">0</span>); &#125;        \</span><br><span class="line">                                                                       \</span><br><span class="line"><span class="keyword">protected</span>:                                                             \</span><br><span class="line">  <span class="keyword">static</span> allocator myAlloc;</span><br><span class="line"></span><br><span class="line"><span class="comment">// IMPLEMENT_POOL_ALLOC -- used in class implementation file</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> IMPLEMENT_POOL_ALLOC(class_name) \</span></span><br><span class="line">  allocator class_name::myAlloc;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// in class definition file</span></span><br><span class="line">  <span class="class"><span class="keyword">class</span> <span class="title">Foo</span></span></span><br><span class="line"><span class="class">  &#123;</span></span><br><span class="line">    DECLARE_POOL_ALLOC()</span><br><span class="line">  <span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">long</span> L;</span><br><span class="line">    <span class="built_in">string</span> str;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span>:</span><br><span class="line">    Foo(<span class="keyword">long</span> l) : L(l) &#123;&#125;</span><br><span class="line">  &#125;;</span><br><span class="line">  <span class="comment">//in class implementation file</span></span><br><span class="line">  IMPLEMENT_POOL_ALLOC(Foo)</span><br><span class="line"></span><br><span class="line">  <span class="comment">//  in class definition file</span></span><br><span class="line">  <span class="class"><span class="keyword">class</span> <span class="title">Goo</span></span></span><br><span class="line"><span class="class">  &#123;</span></span><br><span class="line">    DECLARE_POOL_ALLOC()</span><br><span class="line">  <span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">complex</span>&lt;<span class="keyword">double</span>&gt; c;</span><br><span class="line">    <span class="built_in">string</span> str;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span>:</span><br><span class="line">    Goo(<span class="keyword">const</span> <span class="built_in">complex</span>&lt;<span class="keyword">double</span>&gt; &amp;x) : c(x) &#123;&#125;</span><br><span class="line">  &#125;;</span><br><span class="line">  <span class="comment">//in class implementation file</span></span><br><span class="line">  IMPLEMENT_POOL_ALLOC(Goo)</span><br></pre></td></tr></table></figure>
+<h1 id="P16-new-handler"><a href="#P16-new-handler" class="headerlink" title="P16. new handler"></a>P16. new handler</h1><ul>
+<li>之前提到内存分配不成功时有补救措施，让使用者释放一些内存进行分配或者终止程序</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">noMoreMemory</span><span class="params">()</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    <span class="built_in">cerr</span> &lt;&lt; <span class="string">&quot;out of memory&quot;</span>;</span><br><span class="line">    <span class="built_in">abort</span>();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  set_new_handler(noMoreMemory);</span><br><span class="line">      <span class="comment">/*</span></span><br><span class="line"><span class="comment">    int* p = new int[100000000000000];   //well, so BIG!</span></span><br><span class="line"><span class="comment">    assert(p);</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">    p = new int[100000000000000000000];  //[Warning] integer constant is too large for its type</span></span><br><span class="line"><span class="comment">    assert(p);</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h1 id="P17-vc6-malloc"><a href="#P17-vc6-malloc" class="headerlink" title="P17. vc6 malloc()"></a>P17. vc6 malloc()</h1><ul>
+<li>debug 模式下 malloc 内存布局</li>
+</ul>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th style="text-align:center">cookie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"> debug header</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align:center"> user block</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align:center"> debug tail</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align:center"> pad</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align:center"> cookie</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li>上下cookie 记录使用的分配内存的大小和使用情况，pad 用来补齐使申请的内存块为16的倍数，获得的指针指向用户区块。</li>
+</ul>
+<h1 id="P18-VC6-标准分配器之实现-P19-BC5-分配器"><a href="#P18-VC6-标准分配器之实现-P19-BC5-分配器" class="headerlink" title="P18. VC6 标准分配器之实现 P19.BC5 分配器"></a>P18. VC6 标准分配器之实现 P19.BC5 分配器</h1><ul>
+<li><p>VC6 中的 <code>allocator</code> 仅仅是调用 <code>::operator new()</code> 和 <code>::operator delete()</code>,没有任何特殊的设计</p>
+</li>
+<li><p>vc6 中的容器都是默认使用这个分配器以元素为单位完成内存分配，因此存在着大量的额外cookie开销。</p>
+</li>
+<li><p>BC5 的分配器行为与VC6 一致</p>
+</li>
+</ul>
+<h1 id="P20-G2-9-标准分配器之实现"><a href="#P20-G2-9-标准分配器之实现" class="headerlink" title="P20. G2.9 标准分配器之实现"></a>P20. G2.9 标准分配器之实现</h1><ul>
+<li><p>G2.9 中的<code>std::allocator</code>的行为与 VC6 和 BC5 完全一致，应该只是出于兼容的考虑</p>
+</li>
+<li><p>G2.9的<code>std::allocator</code>并没有在自带的STL中使用，容器的默认分配器是 <code>alloc</code>,接受的是字节大小而不是元素个数。</p>
+</li>
+</ul>
+<h1 id="P21-G2-9-std-allo-vs-G4-9-pool-alloc"><a href="#P21-G2-9-std-allo-vs-G4-9-pool-alloc" class="headerlink" title="P21. G2.9 std::allo vs. G4.9 __pool_alloc"></a>P21. G2.9 std::allo vs. G4.9 __pool_alloc</h1><ul>
+<li><p>G4.9标准库中有许多 extented allocators, 包含 __pool_alloc </p>
+</li>
+<li><p>在G4.9 中 <code>std::alloc</code> 改名为 <code>__pool_alloc</code></p>
+</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//G4.9</span></span><br><span class="line"><span class="built_in">vector</span>&lt;<span class="built_in">string</span>,__gnu_cxx::__pool_alloc&lt;<span class="built_in">string</span>&gt;&gt; vec;</span><br><span class="line"></span><br><span class="line"><span class="comment">//G2.9</span></span><br><span class="line"><span class="built_in">vector</span>&lt;<span class="built_in">string</span>,<span class="built_in">std</span>::alloc&lt;<span class="built_in">string</span>&gt;&gt;</span><br></pre></td></tr></table></figure>
+<h1 id="P22-G4-9-pool-allocator-例用"><a href="#P22-G4-9-pool-allocator-例用" class="headerlink" title="P22. G4.9 pool allocator 例用"></a>P22. G4.9 pool allocator 例用</h1><ul>
+<li><p>G4.9 的标准分配器也和之前的没什么不同（应该是标准库的规定）</p>
+</li>
+<li><p>在创建大量的obj时，推荐使用 __pool_alloc，减少cookie，提高内存利用率</p>
+</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">template&lt;typename Alloc&gt; </span></span><br><span class="line"><span class="comment">void cookie_test(Alloc&amp;&amp; alloc, size_t n)  //由於呼叫時以 temp obj (Rvalue) 傳入，所以這兒使用 &amp;&amp;. 只是隨意之下的搭配</span></span><br><span class="line"><span class="comment">                                            //使用 &amp;&amp;，那麼呼叫時就不能以 Lvalue 傳入.  </span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">  <span class="comment">//上述, pass by Rvalue reference 是 OK 的.</span></span><br><span class="line">  <span class="comment">//但我不想那麼標新立異, 就改用 pass by value 吧</span></span><br><span class="line">  <span class="keyword">template</span> &lt;<span class="keyword">typename</span> Alloc&gt;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">cookie_test</span><span class="params">(Alloc alloc, <span class="keyword">size_t</span> n)</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    <span class="keyword">typename</span> Alloc::value_type *p1, *p2, *p3; <span class="comment">//需有 typename</span></span><br><span class="line">    p1 = alloc.allocate(n);            <span class="comment">//allocate() and deallocate() 是 non-static, 需以 object 呼叫之.</span></span><br><span class="line">    p2 = alloc.allocate(n);</span><br><span class="line">    p3 = alloc.allocate(n);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;p1= &quot;</span> &lt;&lt; p1 &lt;&lt; <span class="string">&#x27;\t&#x27;</span> &lt;&lt; <span class="string">&quot;p2= &quot;</span> &lt;&lt; p2 &lt;&lt; <span class="string">&#x27;\t&#x27;</span> &lt;&lt; <span class="string">&quot;p3= &quot;</span> &lt;&lt; p3 &lt;&lt; <span class="string">&#x27;\n&#x27;</span>;</span><br><span class="line"></span><br><span class="line">    alloc.deallocate(p1, <span class="keyword">sizeof</span>(<span class="keyword">typename</span> Alloc::value_type)); <span class="comment">//需有 typename</span></span><br><span class="line">    alloc.deallocate(p2, <span class="keyword">sizeof</span>(<span class="keyword">typename</span> Alloc::value_type)); <span class="comment">//有些 allocator 對於 2nd argument 的值無所謂</span></span><br><span class="line">    alloc.deallocate(p3, <span class="keyword">sizeof</span>(<span class="keyword">typename</span> Alloc::value_type));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  cookie_test(<span class="built_in">std</span>::allocator&lt;<span class="keyword">int</span>&gt;(), <span class="number">1</span>);        <span class="comment">//相距 10h (表示帶 cookie)</span></span><br><span class="line">  cookie_test(__gnu_cxx::malloc_allocator&lt;<span class="keyword">int</span>&gt;(), <span class="number">1</span>); <span class="comment">//相距 10h (表示帶 cookie)</span></span><br><span class="line">  cookie_test(__gnu_cxx::__pool_alloc&lt;<span class="keyword">int</span>&gt;(), <span class="number">1</span>);    <span class="comment">//相距 08h (表示不帶 cookie)</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h1 id="P23-std-alloc-运行模式"><a href="#P23-std-alloc-运行模式" class="headerlink" title="P23. std::alloc 运行模式"></a>P23. std::alloc 运行模式</h1><ul>
+<li><p>std::alloc 包含16条链表，负责8 ~ 16*8字节的数据，大于128字节的数据则有malloc服务</p>
+</li>
+<li><p>每条链表每次申请2*20个单元的数据（这里的20是经验值），前20个单元用于本条链表，后20个用作储备，如第一次在32个字节的单元申请2*20个空间，当需要用到64字节数据时，可以先取用这些储备单元。</p>
+</li>
+<li><p>embedded pointers 嵌入式指针，使用内存块的前4个字节作为单向链表的指针</p>
+</li>
+</ul>
+<h1 id="P24-G2-9-std-alloc-运行一瞥01-05"><a href="#P24-G2-9-std-alloc-运行一瞥01-05" class="headerlink" title="P24. G2.9 std::alloc 运行一瞥01-05"></a>P24. G2.9 std::alloc 运行一瞥01-05</h1><ul>
+<li><p>申请到的内存都先放在pool中（储备区），用指针指明头尾</p>
+</li>
+<li><p>从pool中切割出来准备挂在list上的区块数量总是在1-20之间</p>
+</li>
+<li><p>多次申请内存为例</p>
+<ul>
+<li><p>申请32bytes内存时，由于pool为空，先向pool中注入32*20*2+RoundUp(0>&gt;4)=1280，从中切出一块给客户，剩下的19个区块挂在list#3上，余下640在pool中备用（RoundUp是追加量，每次越要越多）</p>
+</li>
+<li><p>申请64bytes，由于pool还有余量，故将pool分为640/64=10个区块，第一个给客户，剩下9个挂在list#7上（共申请1280，pool为0个）</p>
+</li>
+<li><p>申请96bytes,由于pool为空,因此注入（malloc申请）96*20*2+RoundUp(1280&gt;&gt;4),第一个给客户，19个给list#11（累计5200，pool：2000）</p>
+</li>
+<li><p>申请88，由于pool有余量，分割20个，第一个给客户，19个给list#10（累计5200，pool：240）</p>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="P25-G2-9-std-alloc-运行一瞥06-10"><a href="#P25-G2-9-std-alloc-运行一瞥06-10" class="headerlink" title="P25. G2.9 std::alloc 运行一瞥06-10"></a>P25. G2.9 std::alloc 运行一瞥06-10</h1><ul>
+<li><p>续上一节例子</p>
+<ul>
+<li><p>连续申请3次88，直接由list#10取出给客户（累计5200，pool：240）</p>
+</li>
+<li><p>申请8，由于pool有余量，分割20个，第一个给客户，19个给list#0（累计5200，pool：80）</p>
+</li>
+<li><p>申请104，list#12没有区块，pool余量不足一个，于是先将余下的80个给list#9（<strong>碎片处理</strong>），然后注入（malloc）104<em>20</em>2+RoundUp(5400&gt;&gt;4)，分割第一个给客户，19个给list#12（累计申请9688，pool：2408）</p>
+</li>
+<li><p>申请112，有余量，分割20个，第一个给客户，19个给list#13（累计申请9688，pool：168）</p>
+</li>
+<li><p>申请48，有余量，分割3个区块，第一个给客户，2个挂在list#5（累计9688，pool：24）</p>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="P26-G2-9-std-alloc-运行一瞥11-13"><a href="#P26-G2-9-std-alloc-运行一瞥11-13" class="headerlink" title="P26. G2.9 std::alloc 运行一瞥11-13"></a>P26. G2.9 std::alloc 运行一瞥11-13</h1><ul>
+<li><p>续上一节例子，观察系统的边界行为，修改源码将系统内存设置为10000，</p>
+<ul>
+<li><p>此时申请72，list#8为空，由于pool余量不足一个，于是先把余下24挂在list#2。但是现在已经无法申请到内存，因此需要使用大于list#8的空闲空间，因此取得list#9填会pool，再切出72给客户（累计申请9688，pool：8）</p>
+</li>
+<li><p>再申请72，list#8为空，pool余量不足一个，于是先把剩下的8个挂在list#0，从最接近的list#10取出一块填到pool，再切出72给客户。（累计9688，pool：16）</p>
+</li>
+<li><p>此时再申请120，系统已经无法满足需求，但是还有许多未使用的链表，系统还剩余312的空间。</p>
+</li>
+</ul>
+</li>
+<li><p>合并未使用的链表难度极高，留下一部分内存给别的程序</p>
+</li>
+</ul>
+<h1 id="P27-29-G2-9-std-alloc-源码剖析"><a href="#P27-29-G2-9-std-alloc-源码剖析" class="headerlink" title="P27-29. G2.9 std::alloc 源码剖析"></a>P27-29. G2.9 std::alloc 源码剖析</h1><ul>
+<li><p>第一级分配器主要来处理之前提到的set_new_handler，与内存分配关系不大</p>
+</li>
+<li><p>主要是对照代码讲解</p>
+</li>
+</ul>
+<h1 id="P30-31-G2-9-std-alloc-观念大整理"><a href="#P30-31-G2-9-std-alloc-观念大整理" class="headerlink" title="P30-31. G2.9 std::alloc 观念大整理"></a>P30-31. G2.9 std::alloc 观念大整理</h1><ul>
+<li><p>大部分与第29讲视频相同</p>
+</li>
+<li><p>deallocate 没有free，源于设计的缺陷，在一开始没有记录分配的指针，在后面loki部分会有改进</p>
+</li>
+</ul>
+<h1 id="P32-41-vc6和vc10的malloc比较-（进入第三讲）"><a href="#P32-41-vc6和vc10的malloc比较-（进入第三讲）" class="headerlink" title="P32-41. vc6和vc10的malloc比较 （进入第三讲）"></a>P32-41. vc6和vc10的malloc比较 （进入第三讲）</h1><ul>
+<li><p>vc6和vc10 main函数启动前的行为，与C++startup课程讲的相同</p>
+</li>
+<li><p>debug模式下内存分配会加上额外开销来记录文件行号等信息</p>
+</li>
+<li><p>所有malloc申请的内存都被登记在sbh之中</p>
+</li>
+</ul>
+<h1 id="P42-44-vc6内存管理free-p"><a href="#P42-44-vc6内存管理free-p" class="headerlink" title="P42-44. vc6内存管理free(p)"></a>P42-44. vc6内存管理free(p)</h1><ul>
+<li><p>先根据指针的地址判断落在哪一个header（一共16个header，每个header 管理 1M的内存）</p>
+</li>
+<li><p>再讲地址减去header指针 初一32得到group分组，再找出对应的链表</p>
+</li>
+<li><p>将1M内存分成32个group，这种一个小块小块的操作更有可能进行整块内存的回收</p>
+</li>
+<li><p>判断全回收：每个group头部有个计数器，每次malloc就会增加，每次free就会减少，当计数器为0时就全回收,变成最初始的8个page</p>
+</li>
+<li><p>全回收后并没有马上还给操作系统，有两个全回收才还给操作系统一个</p>
+</li>
+<li><p>虽然 <code>std::allocator</code> 、<code>CRT(malloc/free)</code> 甚至 <code>heapAlloc</code>都是类似的使用链表来来进行内存的维护，但是这并不重复，因为<code>std::allocator</code>不能预设<code>CRT(malloc/free)</code>已经进行了内存管理，<code>CRT(malloc/free)</code>也不能预设系统API<code>heapAlloc</code>内部有内存管理。</p>
+</li>
+<li><p>但是在vc10中 由于是windows平台，malloc的行为就是直接调用 <code>heapAlloc</code> 没有sbh管理</p>
+</li>
+</ul>
+<h1 id="P45-上中下3个classes分析"><a href="#P45-上中下3个classes分析" class="headerlink" title="P45. 上中下3个classes分析"></a>P45. 上中下3个classes分析</h1><ul>
+<li><p>loki allocator 上中下三层</p>
+</li>
+<li><p>底层 <strong>Chunk</strong></p>
+<ul>
+<li><strong>pData_</strong> : unsigned char* (指针指向一块内存)</li>
+<li><strong>firstAvailableBlock_</strong> : unsigned char (第一个可用的区块编号)</li>
+<li><strong>blockAvailavle_</strong>: unsigned char (剩余可用的区块数量)</li>
+</ul>
+</li>
+<li><p>中层 <strong>FixedAllocator</strong></p>
+<ul>
+<li><strong>chunks_</strong> : vector\<Chunk> (动态数组存放底层)</Chunk></li>
+<li><strong>allocChunk_</strong>: Chunk*</li>
+<li><strong>deallocChunk_</strong>: Chunk*  (两根指针用来维护)</li>
+</ul>
+</li>
+<li><p>上层 <strong>SmallObjAllocator</strong></p>
+<ul>
+<li><strong>pool_</strong>: vector\<FixedAllocator> （动态数组存放中层）</FixedAllocator></li>
+<li><strong>pLastAlloc</strong>：FixedAllocator*</li>
+<li><strong>plastDealloc</strong>: FixedAllocator*</li>
+<li>chunkSize: size_t</li>
+<li>maxObjectSize: size_t</li>
+</ul>
+</li>
+</ul>
+<h1 id="P46-loki-allocator行为图解"><a href="#P46-loki-allocator行为图解" class="headerlink" title="P46. loki_allocator行为图解"></a>P46. loki_allocator行为图解</h1><ul>
+<li><p>申请一块内存分成64个块，借用每块的头部保存下一个index，</p>
+</li>
+<li><p>刚开始时 <code>firstAvailableBlock</code>是0，第一个内存空间的头部是1即下一个index</p>
+</li>
+<li><p>当客户需要内存时，先记录<code>firstAvailableBlock</code>所在区块的地址作为返回的指针，再取得当前第一个头部数据作为<code>firstAvailableBlock</code>的更新值，同时<code>blockAvailavle_</code>减一</p>
+</li>
+<li><p>当客户归还内存时，将<code>firstAvailableBlock</code>中的值填入释放的地址中，同时<code>firstAvailableBlock</code> 和 <code>blockAvailavle_</code> 自增</p>
+</li>
+</ul>
+<h1 id="P47-48-class-FixedAllocator-分析（上）（下）"><a href="#P47-48-class-FixedAllocator-分析（上）（下）" class="headerlink" title="P47-48. class FixedAllocator 分析（上）（下）"></a>P47-48. class FixedAllocator 分析（上）（下）</h1><ul>
+<li><p>allocChunk 和 deallocChunk 表示上一次分配/回收过的Chunk，因为往往申请或释放的内存都在临近的区域</p>
+</li>
+<li><p>FixedAllocator::Allocate()</p>
+<ul>
+<li><p>若上次分配过的allocChunk还有则直接分配</p>
+</li>
+<li><p>若上次分配过的allocChunk没有则从vector的第一个开始暴力查找，若能找到也就可以分配</p>
+</li>
+<li><p>若找到vector底部也没有找到就重新申请Chunk并存入vector中，将allocChunk指向当前vector尾部的chunk。由于有push_back操作的存在可能会引起vector的成长，因此这里还重新将deallocChunk指向vector的头部</p>
+</li>
+</ul>
+</li>
+<li><p>FixedAllocator::Deallocate()</p>
+<ul>
+<li>当客户归还内存指针时时从deallocChunk所在位置向上向下查找</li>
+<li>找到所在Chunk后判断是否全回收，与malloc一样有一个延缓回收的机制，有2个全回收时才归还一个</li>
+<li>当全回收时，总是吧chunk放在vector的尾部，同时将最后一个与当前的chunk进行交换，因此只要在全回收是检查最后一个是不是已经全回收即可</li>
+</ul>
+</li>
+</ul>
+<h1 id="P49-loki-allocator总结"><a href="#P49-loki-allocator总结" class="headerlink" title="P49. loki_allocator总结"></a>P49. loki_allocator总结</h1><ul>
+<li><p>精简强悍，for循环有点暴力</p>
+</li>
+<li><p>用array 取代list 用 index取代poiner 手段特殊</p>
+</li>
+<li><p>可以很简单的判断全回收（与前面malloc一样有个计数器），进而还给操作系统</p>
+</li>
+<li><p>可以暂缓归还</p>
+</li>
+<li><p>loki_allocator的最佳客户是容器，但是其内部又含有一个容器vector。这并不冲突，因为内部的这个vector使用的是标准库的内存分配</p>
+</li>
+</ul>
+<h1 id="P50-53-GNU-C-对allocator的描述"><a href="#P50-53-GNU-C-对allocator的描述" class="headerlink" title="P50-53. GNU C++ 对allocator的描述"></a>P50-53. GNU C++ 对allocator的描述</h1><ul>
+<li><p>GNU C++ 有很多allocator。除了之前详细解释的__pool_alloc之外，还有一个bitmap_allocator 值得我们学习，其余的对于我们意义不大</p>
+<ol>
+<li><code>new_allocator</code>  vs2013和G4.9 的标准分配器 <code>new_allocator</code> 里面的分配与释放就是调用 operator new() 和operator delete()，并没有特殊的设计</li>
+<li><code>malloc_allocator</code> 就是直接调用malloc和free</li>
+<li><code>array_allocator</code> 使用静态数组来进行内存管理，因此也不需要释放。为了保持接口一致，在deallocate()函数内什么都没有做因此也没有做内存管理，用处不大</li>
+<li><code>debug_allocator</code>,包装了另一个分配器调试用，引入的额外变量作用类似于cookie，而allocator本身的目的就是为了较少cookie，因此对用户来说意义不大</li>
+<li><code>__pool_alloc</code> G2.9的默认分配器alloc在G4.9中的名称 使用时要<code>__gnu_cxx::__pool_alloc</code>，注意虽然进行了很好的内存管理，但是这个分配器并没有把内存还给操作系统</li>
+</ol>
+</li>
+</ul>
+<h1 id="P54-bitmap-allocator-（上）"><a href="#P54-bitmap-allocator-（上）" class="headerlink" title="P54. bitmap_allocator （上）"></a>P54. bitmap_allocator （上）</h1><ul>
+<li><p>bitmap_allocator 私有继承自 free_list 虽然很奇怪，仅仅是因为里面需要一个list来维护</p>
+</li>
+<li><p>分配大于一个元素的使用 <code>::operator new()</code>来分配，一个元素时才由这个allocator分配（容器每次都是要一个，不会出现要多个的情况）</p>
+</li>
+<li><p>bitmap_allocator 内部结构</p>
+<ul>
+<li>block 分配给用户的内存空间，一般为8个字节</li>
+<li><p>super_blocks的结构 :</p>
+<ul>
+<li>super block size 记录整个super_blocks的大小 第一个的大小为4+4*2+64*2=524</li>
+<li>use count 记录使用了几个区块</li>
+<li>2个bitmap 记录64个blocks的使用情况，bitmap的类型是unsigned int，用每个比特位表示每个block的使用情况</li>
+<li>一开始为 64 个blocks</li>
+</ul>
+</li>
+<li><p>__mini_vector 内部实现了一个小型的vector，内部存储由两根指针的单元，这两根指针指向super_block的头和尾用来管理super_blocks 。这里避免使用标准库的容器因此自己内部实现（vector内部就是三根指针，详见之前学过的课程）</p>
+</li>
+</ul>
+</li>
+<li><p>当用尽一开始的64个blocks之后，下一个super_block 的容量会加倍成为128个，因此需要4个整数来表示是否使用。因此第二个super_block的大小是 4+4*4+128*8=1044</p>
+</li>
+<li><p>同理用完这次分配的128个之后，下一次申请256个，容量为4+8*4+256*8 = 2084</p>
+</li>
+<li><p>若不曾全回收，分配规模不断倍增，若全回收，下次分配规模减半</p>
+</li>
+</ul>
+<h1 id="P55-bitmap-allocator-（下）"><a href="#P55-bitmap-allocator-（下）" class="headerlink" title="P55. bitmap_allocator （下）"></a>P55. bitmap_allocator （下）</h1><ul>
+<li><p>当 super_block#1 回收2个blocks，且尚未全回收，若接下来需要分配2个blocks，从后面的super_block取出</p>
+</li>
+<li><p>若后面的super_block用光时，先使用当前回收的这两个空间，再新建一个super_block</p>
+</li>
+<li><p>全回收时super_block使用一个名为freelist的__mini_vector维护，并排好序，当回收个数超过64个时将最大的那个super_block还给操作系统</p>
+</li>
+<li><p>当freelist有super_block时，不会重新创建super_block</p>
+</li>
+</ul>
+<h1 id="P56-谈谈const"><a href="#P56-谈谈const" class="headerlink" title="P56. 谈谈const"></a>P56. 谈谈const</h1><ul>
+<li><p>const 在<strong>成员函数</strong>参数列后面（小括号后面），函数本体前面（大括号前面），表示这个成员函数不改变类内变量的数据（不能用作全局函数）</p>
+<ul>
+<li>不修改类内数据的函数需要用在后面用const修饰，否则const对象无法调用这个函数</li>
+</ul>
+</li>
+<li><p>当成员函数的const 和 non-const 版本同时存在时，const obj 只能调用 const 版本，non-const obj 智能调用 non-const 版本</p>
+</li>
+</ul>
+<h1 id="P57-60-都是之前的视频"><a href="#P57-60-都是之前的视频" class="headerlink" title="P57-60 都是之前的视频"></a>P57-60 都是之前的视频</h1>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/02/09/C-%E7%A8%8B%E5%BA%8F%E7%94%9F%E5%89%8D%E6%AD%BB%E5%90%8E/" rel="prev" title="C++ 程序生前死后">
+      <i class="fa fa-chevron-left"></i> C++ 程序生前死后
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/02/22/C-%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="next" title="C++设计模式">
+      C++设计模式 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#P1-overview"><span class="nav-text">P1. overview</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P2-%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E7%9A%84%E6%AF%8F%E4%B8%80%E5%B1%82%E9%9D%A2"><span class="nav-text">P2. 内存分配的每一层面</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P3-%E5%9B%9B%E4%B8%AA%E5%B1%82%E9%9D%A2%E5%9F%BA%E6%9C%AC%E7%94%A8%E6%B3%95"><span class="nav-text">P3.四个层面基本用法</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P4-%E5%9F%BA%E6%9C%AC%E6%9E%84%E5%BB%BA%E4%B8%80-new-delete-expression-%E4%B8%8A"><span class="nav-text">P4. 基本构建一 new delete expression 上</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P5-%E5%9F%BA%E6%9C%AC%E6%9E%84%E5%BB%BA%E4%B8%80-new-delete-expression-%E4%B8%AD"><span class="nav-text">P5. 基本构建一 new delete expression 中</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P6-%E5%9F%BA%E6%9C%AC%E6%9E%84%E5%BB%BA%E4%B8%80-new-delete-expression-%E4%B8%8B"><span class="nav-text">P6. 基本构建一 new delete expression 下</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P7-Array-new"><span class="nav-text">P7. Array new</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P8-placement-new"><span class="nav-text">P8. placement new</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P9-%E9%87%8D%E8%BD%BD"><span class="nav-text">P9. 重载</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P10-%E9%87%8D%E8%BD%BD%E7%A4%BA%E4%BE%8B%EF%BC%88%E4%B8%8A%EF%BC%89"><span class="nav-text">P10. 重载示例（上）</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P11-%E9%87%8D%E8%BD%BD%E7%A4%BA%E4%BE%8B-%EF%BC%88%E4%B8%8B%EF%BC%89"><span class="nav-text">P11. 重载示例 （下）</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P12-per-class-allocator"><span class="nav-text">P12. per-class allocator</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P13-per-class-allocator-2"><span class="nav-text">P13. per-class allocator 2</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P14-static-allocator"><span class="nav-text">P14. static allocator</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P15-macro-for-static-allocator"><span class="nav-text">P15. macro for static allocator</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P16-new-handler"><span class="nav-text">P16. new handler</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P17-vc6-malloc"><span class="nav-text">P17. vc6 malloc()</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P18-VC6-%E6%A0%87%E5%87%86%E5%88%86%E9%85%8D%E5%99%A8%E4%B9%8B%E5%AE%9E%E7%8E%B0-P19-BC5-%E5%88%86%E9%85%8D%E5%99%A8"><span class="nav-text">P18. VC6 标准分配器之实现 P19.BC5 分配器</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P20-G2-9-%E6%A0%87%E5%87%86%E5%88%86%E9%85%8D%E5%99%A8%E4%B9%8B%E5%AE%9E%E7%8E%B0"><span class="nav-text">P20. G2.9 标准分配器之实现</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P21-G2-9-std-allo-vs-G4-9-pool-alloc"><span class="nav-text">P21. G2.9 std::allo vs. G4.9 __pool_alloc</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P22-G4-9-pool-allocator-%E4%BE%8B%E7%94%A8"><span class="nav-text">P22. G4.9 pool allocator 例用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P23-std-alloc-%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%BC%8F"><span class="nav-text">P23. std::alloc 运行模式</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P24-G2-9-std-alloc-%E8%BF%90%E8%A1%8C%E4%B8%80%E7%9E%A501-05"><span class="nav-text">P24. G2.9 std::alloc 运行一瞥01-05</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P25-G2-9-std-alloc-%E8%BF%90%E8%A1%8C%E4%B8%80%E7%9E%A506-10"><span class="nav-text">P25. G2.9 std::alloc 运行一瞥06-10</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P26-G2-9-std-alloc-%E8%BF%90%E8%A1%8C%E4%B8%80%E7%9E%A511-13"><span class="nav-text">P26. G2.9 std::alloc 运行一瞥11-13</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P27-29-G2-9-std-alloc-%E6%BA%90%E7%A0%81%E5%89%96%E6%9E%90"><span class="nav-text">P27-29. G2.9 std::alloc 源码剖析</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P30-31-G2-9-std-alloc-%E8%A7%82%E5%BF%B5%E5%A4%A7%E6%95%B4%E7%90%86"><span class="nav-text">P30-31. G2.9 std::alloc 观念大整理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P32-41-vc6%E5%92%8Cvc10%E7%9A%84malloc%E6%AF%94%E8%BE%83-%EF%BC%88%E8%BF%9B%E5%85%A5%E7%AC%AC%E4%B8%89%E8%AE%B2%EF%BC%89"><span class="nav-text">P32-41. vc6和vc10的malloc比较 （进入第三讲）</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P42-44-vc6%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86free-p"><span class="nav-text">P42-44. vc6内存管理free(p)</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P45-%E4%B8%8A%E4%B8%AD%E4%B8%8B3%E4%B8%AAclasses%E5%88%86%E6%9E%90"><span class="nav-text">P45. 上中下3个classes分析</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P46-loki-allocator%E8%A1%8C%E4%B8%BA%E5%9B%BE%E8%A7%A3"><span class="nav-text">P46. loki_allocator行为图解</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P47-48-class-FixedAllocator-%E5%88%86%E6%9E%90%EF%BC%88%E4%B8%8A%EF%BC%89%EF%BC%88%E4%B8%8B%EF%BC%89"><span class="nav-text">P47-48. class FixedAllocator 分析（上）（下）</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P49-loki-allocator%E6%80%BB%E7%BB%93"><span class="nav-text">P49. loki_allocator总结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P50-53-GNU-C-%E5%AF%B9allocator%E7%9A%84%E6%8F%8F%E8%BF%B0"><span class="nav-text">P50-53. GNU C++ 对allocator的描述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P54-bitmap-allocator-%EF%BC%88%E4%B8%8A%EF%BC%89"><span class="nav-text">P54. bitmap_allocator （上）</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P55-bitmap-allocator-%EF%BC%88%E4%B8%8B%EF%BC%89"><span class="nav-text">P55. bitmap_allocator （下）</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P56-%E8%B0%88%E8%B0%88const"><span class="nav-text">P56. 谈谈const</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#P57-60-%E9%83%BD%E6%98%AF%E4%B9%8B%E5%89%8D%E7%9A%84%E8%A7%86%E9%A2%91"><span class="nav-text">P57-60 都是之前的视频</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">lclee</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lclee</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>
